@@ -340,3 +340,74 @@ body {
 .setup-step ol { font-size: 13px; color: var(--g600); line-height: 2; padding-left: 16px; }
 .setup-step code { background: var(--white); border: 1px solid var(--g200); padding: 1px 5px; border-radius: 3px; font-size: 12px; color: var(--blue); }
 .info-box { background: var(--blue-bg); border: 1px solid #bfdbfe; border-radius: var(--r); padding: 10px 14px; font-size: 13px; color: var(--g600); line-height: 1.6; }
+
+
+/* ── BOARD ── */
+.bph { padding: 18px 22px 14px; background: var(--white); border-bottom: 1px solid var(--g200); }
+.bp-title { font-size: 15px; font-weight: 700; color: var(--g900); }
+.bp-sub   { font-size: 12px; color: var(--g400); margin-top: 2px; }
+.board-body { padding: 20px 22px; display: flex; flex-direction: column; gap: 32px; }
+.board-section-title {
+  font-size: 13px; font-weight: 700; color: var(--g700);
+  display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px;
+}
+
+/* Phases */
+.phases-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px,1fr)); gap: 12px; }
+.phase-card {
+  background: var(--white); border: 1px solid var(--g200); border-left: 4px solid var(--blue);
+  border-radius: 8px; padding: 16px; cursor: pointer; transition: box-shadow .12s;
+}
+.phase-card:hover { box-shadow: var(--sh-md); }
+.phase-qlabel {
+  font-size: 11px; font-weight: 700; color: var(--white);
+  padding: 2px 8px; border-radius: 100px; display: inline-block; margin-bottom: 8px;
+}
+.phase-name { font-size: 14px; font-weight: 700; color: var(--g900); margin-bottom: 4px; }
+.phase-obj  { font-size: 12px; color: var(--g500); margin-bottom: 10px; line-height: 1.5; min-height: 18px; }
+.phase-prog-bar  { background: var(--g100); border-radius: 100px; height: 6px; margin-bottom: 5px; overflow: hidden; }
+.phase-prog-fill { height: 6px; border-radius: 100px; transition: width .4s; }
+.phase-prog-txt  { font-size: 11px; color: var(--g400); display: flex; justify-content: space-between; }
+
+/* Documents */
+.doc-month-label {
+  font-size: 11px; font-weight: 700; color: var(--g400);
+  text-transform: uppercase; letter-spacing: .05em; margin: 14px 0 6px; padding-left: 2px;
+}
+.doc-list { display: flex; flex-direction: column; gap: 4px; margin-bottom: 8px; }
+.doc-row {
+  display: flex; align-items: center; gap: 10px;
+  background: var(--white); border: 1px solid var(--g200); border-radius: var(--r);
+  padding: 10px 14px; transition: background .1s;
+}
+.doc-row:hover { background: var(--bg); }
+.doc-icon { font-size: 20px; flex-shrink: 0; }
+.doc-info { flex: 1; min-width: 0; }
+.doc-name { font-size: 13px; font-weight: 500; color: var(--g800); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.doc-meta { font-size: 11px; color: var(--g400); margin-top: 1px; }
+.doc-btn {
+  font-size: 12px; padding: 4px 10px; border-radius: var(--r); cursor: pointer;
+  border: 1px solid var(--g200); background: var(--white); color: var(--g500);
+  font-family: var(--ff); transition: all .12s; white-space: nowrap;
+}
+.doc-btn:hover { background: var(--g100); color: var(--g700); }
+.doc-btn.del:hover { background: var(--red-bg); border-color: #fca5a5; color: var(--red); }
+.doc-empty {
+  text-align: center; padding: 24px; color: var(--g400); font-size: 13px;
+  border: 2px dashed var(--g200); border-radius: var(--r);
+}
+
+/* Timeline — phases row */
+.tl-phases-row { display: flex; border-bottom: 1px solid var(--g200); background: var(--blue-bg); }
+.tl-phases-label {
+  width: 130px; flex-shrink: 0; padding: 8px 12px;
+  font-size: 11px; font-weight: 600; color: var(--blue);
+  text-transform: uppercase; letter-spacing: .04em; border-right: 1px solid var(--g200);
+  display: flex; align-items: center;
+}
+.tl-phases-area { flex: 1; position: relative; height: 40px; }
+.tl-phase-bar {
+  position: absolute; height: 26px; top: 7px; border-radius: 4px;
+  display: flex; align-items: center; padding: 0 8px;
+  font-size: 10px; font-weight: 700; white-space: nowrap; overflow: hidden; color: var(--white);
+}

@@ -25,17 +25,29 @@ let _db     = null;
 let _ref    = null;
 
 // Filtres actifs
-const F = { status: new Set(), priority: new Set(), type: new Set(), centre: new Set() };
+const F = { status: new Set(), priority: new Set(), type: new Set() };
+
+// ── ÉTAT BOARD ───────────────────────────────────────────────────
+let phases      = {};
+let documents   = {};
+let editPhaseId = null;
+let _pendingDoc = null;
+
+const QCOLORS = { Q1: '#2563eb', Q2: '#16a34a', Q3: '#b45309', Q4: '#7c3aed' };
+const QDATES  = {
+  Q1: { start: '-01-01', end: '-03-31' },
+  Q2: { start: '-04-01', end: '-06-30' },
+  Q3: { start: '-07-01', end: '-09-30' },
+  Q4: { start: '-10-01', end: '-12-31' },
+};
 
 
 // ── CONSTANTES / MAPPINGS ────────────────────────────────────────
 const TC = {
-  Structure:    '#2563eb',
-  Recrutement:  '#7c3aed',
-  Formation:    '#b45309',
-  Produit:      '#16a34a',
-  Gouvernance:  '#0891b2',
-  Client:       '#dc2626'
+  'Offre':            '#2563eb',
+  'Compétences':      '#7c3aed',
+  'Go-to-Market':     '#16a34a',
+  'Modèle Economique':'#b45309',
 };
 
 const PL = { basse: 'Basse', moyenne: 'Moyenne', haute: 'Haute', critique: 'Critique' };
@@ -74,6 +86,18 @@ function initFB() {
       snap => { tasks = snap.val() || {}; render(); setSS('connected'); },
       ()   => setSS('offline')
     );
+    onValue(ref(_db, 'ava2i/phases'), snap => {
+      phases = snap.val() || {};
+      lsSavePhases();
+      populatePhaseSidebar();
+      if (document.getElementById('panel-board').classList.contains('on')) renderPhases();
+      if (curView === 'timeline') renderTimeline();
+    });
+    onValue(ref(_db, 'ava2i/documents'), snap => {
+      documents = snap.val() || {};
+      lsSaveDocs();
+      if (document.getElementById('panel-board').classList.contains('on')) renderDocs();
+    });
   } catch (e) {
     setSS('offline');
   }
@@ -111,9 +135,16 @@ function lsLoad() {
   } catch (e) {}
 }
 
+function lsSavePhases() { try { localStorage.setItem('ava2i_ph', JSON.stringify(phases)); } catch(e) {} }
+function lsLoadPhases() { try { const d = localStorage.getItem('ava2i_ph'); if (d) phases = JSON.parse(d); } catch(e) {} }
+function lsSaveDocs()   { try { localStorage.setItem('ava2i_dc', JSON.stringify(documents)); } catch(e) {} }
+function lsLoadDocs()   { try { const d = localStorage.getItem('ava2i_dc'); if (d) documents = JSON.parse(d); } catch(e) {} }
+
 // Initialisation au chargement de la page
 window.addEventListener('load', () => {
   lsLoad();
+  lsLoadPhases();
+  lsLoadDocs();
   setTimeout(() => {
     if (window._fb) initFB();
     else setSS('offline');
@@ -132,9 +163,10 @@ function openNew() {
   });
   document.getElementById('ms').value  = 'todo';
   document.getElementById('mp').value  = 'moyenne';
-  document.getElementById('mty').value = 'Structure';
-  document.getElementById('mc').value  = 'Transversal';
+  document.getElementById('mty').value = 'Offre';
   document.getElementById('mst').value = new Date().toISOString().slice(0, 10);
+  populatePhaseDropdown();
+  document.getElementById('mph').value = '';
   document.getElementById('mbdel').style.display = 'none';
   document.getElementById('taskOv').classList.add('on');
   setTimeout(() => document.getElementById('mt').focus(), 150);
@@ -147,12 +179,13 @@ function openTask(id) {
   document.getElementById('mt').value  = t.title    || '';
   document.getElementById('ms').value  = t.status   || 'todo';
   document.getElementById('mp').value  = t.priority || 'moyenne';
-  document.getElementById('mty').value = t.type     || 'Structure';
-  document.getElementById('mc').value  = t.centre   || 'Transversal';
+  document.getElementById('mty').value = t.type     || 'Offre';
   document.getElementById('mo').value  = t.owner    || '';
   document.getElementById('mst').value = t.start    || '';
   document.getElementById('mdl').value = t.deadline || '';
   document.getElementById('mde').value = t.desc     || '';
+  populatePhaseDropdown();
+  document.getElementById('mph').value = t.phaseId  || '';
   document.getElementById('mbdel').style.display = '';
   document.getElementById('taskOv').classList.add('on');
 }
@@ -161,16 +194,17 @@ function saveTask() {
   const title = document.getElementById('mt').value.trim();
   if (!title) return;
   const id = editId || 't' + Date.now();
+  const phaseId = document.getElementById('mph').value;
   save({
     id, title,
     status:    document.getElementById('ms').value,
     priority:  document.getElementById('mp').value,
     type:      document.getElementById('mty').value,
-    centre:    document.getElementById('mc').value,
     owner:     document.getElementById('mo').value.trim(),
     start:     document.getElementById('mst').value,
     deadline:  document.getElementById('mdl').value,
     desc:      document.getElementById('mde').value.trim(),
+    phaseId:   phaseId || null,
     createdAt: tasks[id]?.createdAt || Date.now(),
     updatedAt: Date.now()
   });
@@ -190,7 +224,7 @@ function ovc(e, id)        { if (e.target.id === id) closeOv(id); }
 function openSetup()       { document.getElementById('setupOv').classList.add('on'); }
 
 document.addEventListener('keydown', e => {
-  if (e.key === 'Escape') { closeOv('taskOv'); closeOv('setupOv'); }
+  if (e.key === 'Escape') { closeOv('taskOv'); closeOv('setupOv'); closeOv('phaseOv'); closeOv('docUploadOv'); }
 });
 
 
@@ -207,22 +241,24 @@ function clearF() {
   document.getElementById('fs').value = '';
   document.getElementById('fo').value = '';
   document.getElementById('fd').value = '';
-  ['status', 'priority', 'type', 'centre'].forEach(g => F[g].clear());
+  document.getElementById('fph').value = '';
+  ['status', 'priority', 'type'].forEach(g => F[g].clear());
   document.querySelectorAll('.chip.on').forEach(c => c.classList.remove('on'));
   render();
 }
 
 function matches(t) {
-  const s  = (document.getElementById('fs').value || '').toLowerCase();
-  const o  = (document.getElementById('fo').value || '').toLowerCase();
-  const dl = document.getElementById('fd').value;
+  const s   = (document.getElementById('fs').value || '').toLowerCase();
+  const o   = (document.getElementById('fo').value || '').toLowerCase();
+  const dl  = document.getElementById('fd').value;
+  const fph = document.getElementById('fph').value;
 
   if (s && !(t.title || '').toLowerCase().includes(s) && !(t.owner || '').toLowerCase().includes(s)) return false;
   if (o && !(t.owner || '').toLowerCase().includes(o)) return false;
   if (F.status.size   && !F.status.has(t.status))     return false;
   if (F.priority.size && !F.priority.has(t.priority)) return false;
   if (F.type.size     && !F.type.has(t.type))         return false;
-  if (F.centre.size   && !F.centre.has(t.centre))     return false;
+  if (fph && t.phaseId !== fph)                        return false;
 
   if (dl && t.deadline) {
     const diff = Math.ceil((new Date(t.deadline) - new Date()) / 864e5);
@@ -287,7 +323,7 @@ function renderList() {
         <div class="tbl">
           <div class="tbl-head">
             <span></span><span>Titre</span><span>Type</span>
-            <span>Priorité</span><span>Centre</span><span>Owner</span>
+            <span>Priorité</span><span>Owner</span>
             <span>Deadline</span><span></span>
           </div>
           ${G[g].map(t => trow(t)).join('')}
@@ -316,7 +352,6 @@ function trow(t) {
     </div>
     <div><span class="type-pill" style="background:${tc}15;color:${tc}">${t.type || '—'}</span></div>
     <div><span class="badge bp-${t.priority || 'moyenne'}">${PL[t.priority] || '—'}</span></div>
-    <div style="font-size:12px;color:var(--g400)">${t.centre || '—'}</div>
     <div>${ow}</div>
     <div>${dltag(t.deadline)}</div>
     <div><button class="row-btn" onclick="event.stopPropagation();openTask('${t.id}')">···</button></div>
@@ -376,11 +411,12 @@ function kdd(e, s) {
 // ── VUE TIMELINE ─────────────────────────────────────────────────
 
 function renderTimeline() {
-  const root  = document.getElementById('tl-root');
-  const empty = document.getElementById('tl-empty');
-  const vt    = vis().filter(t => t.start && t.end);
+  const root    = document.getElementById('tl-root');
+  const empty   = document.getElementById('tl-empty');
+  const vt      = vis().filter(t => t.start && t.deadline);
+  const phList  = Object.values(phases).filter(ph => ph.start && ph.end);
 
-  if (!vt.length) {
+  if (!vt.length && !phList.length) {
     root.innerHTML = '';
     root.style.display  = 'none';
     empty.style.display = '';
@@ -389,9 +425,11 @@ function renderTimeline() {
   root.style.display  = '';
   empty.style.display = 'none';
 
-  // Bornes de la timeline
-  let mn = new Date(Math.min(...vt.map(t => new Date(t.start))));
-  let mx = new Date(Math.max(...vt.map(t => new Date(t.end))));
+  // Bornes de la timeline (tâches + phases)
+  const allStarts = [...vt.map(t => new Date(t.start)), ...phList.map(p => new Date(p.start))];
+  const allEnds   = [...vt.map(t => new Date(t.deadline)), ...phList.map(p => new Date(p.end))];
+  let mn = new Date(Math.min(...allStarts));
+  let mx = new Date(Math.max(...allEnds));
   mn = new Date(mn.getFullYear(), mn.getMonth(), 1);
   mx = new Date(mx.getFullYear(), mx.getMonth() + 2, 0);
 
@@ -406,12 +444,35 @@ function renderTimeline() {
     cur = new Date(cur.getFullYear(), cur.getMonth() + 1, 1);
   }
 
-  const centres = ['Transversal', 'C01', 'C02', 'C03'];
-  const lanes   = centres
-    .map(c => ({ c, tasks: vt.filter(t => t.centre === c) }))
-    .filter(l => l.tasks.length);
+  // Grouper par phase
+  const phaseOrder = Object.values(phases)
+    .sort((a, b) => a.year !== b.year ? a.year - b.year : a.quarter.localeCompare(b.quarter));
+  const lanes = [
+    ...phaseOrder
+      .map(ph => ({ c: `${ph.quarter} ${ph.year} — ${ph.name}`, tasks: vt.filter(t => t.phaseId === ph.id), color: ph.color || QCOLORS[ph.quarter] }))
+      .filter(l => l.tasks.length),
+    { c: 'Sans phase', tasks: vt.filter(t => !t.phaseId), color: 'var(--g400)' }
+  ].filter(l => l.tasks.length);
 
   const tp = pct(new Date());
+
+  // Ligne des phases
+  const phasesRowHtml = phList.length ? `
+    <div class="tl-phases-row">
+      <div class="tl-phases-label">Phases</div>
+      <div class="tl-phases-area">
+        ${phList.map(ph => {
+          const l     = pct(ph.start);
+          const w     = Math.max(Number(pct(ph.end)) - Number(l), 0.5);
+          const color = ph.color || QCOLORS[ph.quarter] || '#6b7280';
+          const prog  = phaseProgress(ph.id).pct;
+          return `<div class="tl-phase-bar"
+            style="left:${l}%;width:${w}%;background:${color}"
+            title="${ph.name} — ${prog}% terminé">${x(ph.quarter)} ${ph.year} · ${prog}%</div>`;
+        }).join('')}
+        ${tp > 0 && tp < 100 ? `<div class="tl-now" style="left:${tp}%"></div>` : ''}
+      </div>
+    </div>` : '';
 
   root.innerHTML = `<div class="tl-box">
     <div class="tl-hrow">
@@ -423,6 +484,7 @@ function renderTimeline() {
         }).join('')}
       </div>
     </div>
+    ${phasesRowHtml}
     ${lanes.map(lane => `
       <div class="tl-row">
         <div class="tl-llabel">${lane.c}</div>
@@ -430,7 +492,7 @@ function renderTimeline() {
           ${lane.tasks.map((t, i) => {
             const tc = TC[t.type] || '#2563eb';
             const l  = pct(t.start);
-            const w  = Math.max(Number(pct(t.end)) - Number(l), 0.5);
+            const w  = Math.max(Number(pct(t.deadline)) - Number(l), 0.5);
             return `<div class="tl-bar"
               style="left:${l}%;width:${w}%;background:${tc}15;border:1px solid ${tc}35;color:${tc};top:${10 + i * 34}px"
               onclick="openTask('${t.id}')">${x(t.title)}</div>`;
@@ -460,6 +522,7 @@ function switchTab(t, btn) {
   document.getElementById('panel-' + t).classList.add('on');
   btn.classList.add('on');
   document.getElementById('sidebar').style.display = t === 'roadmap' ? '' : 'none';
+  if (t === 'board') renderBoard();
 }
 
 
@@ -651,4 +714,282 @@ function sc(s) {
     h = s.charCodeAt(i) + ((h << 5) - h);
   }
   return `hsl(${Math.abs(h) % 360},48%,42%)`;
+}
+
+
+// ── BOARD ────────────────────────────────────────────────────────
+
+function renderBoard() {
+  renderPhases();
+  renderDocs();
+}
+
+function phaseProgress(phaseId) {
+  const linked = Object.values(tasks).filter(t => t.phaseId === phaseId);
+  const done   = linked.filter(t => t.status === 'done').length;
+  const total  = linked.length;
+  return { pct: total ? Math.round(done / total * 100) : 0, done, total };
+}
+
+function renderPhases() {
+  const grid = document.getElementById('phases-grid');
+  if (!grid) return;
+  const list = Object.values(phases).sort((a, b) => {
+    if (a.year !== b.year) return a.year - b.year;
+    return a.quarter.localeCompare(b.quarter);
+  });
+  if (!list.length) {
+    grid.innerHTML = `<div style="grid-column:1/-1;text-align:center;padding:40px;color:var(--g400);font-size:13px;border:2px dashed var(--g200);border-radius:var(--r)">Aucune phase définie. Crée ta première phase.</div>`;
+    return;
+  }
+  grid.innerHTML = list.map(ph => {
+    const { pct, done, total } = phaseProgress(ph.id);
+    const color   = ph.color || QCOLORS[ph.quarter] || '#6b7280';
+    const dateStr = ph.start && ph.end
+      ? `<div style="font-size:11px;color:var(--g400);margin-bottom:8px">${ph.start} → ${ph.end}</div>`
+      : '';
+    return `<div class="phase-card" style="border-left-color:${color}" onclick="openPhase('${ph.id}')">
+      <span class="phase-qlabel" style="background:${color}">${ph.quarter} ${ph.year}</span>
+      <div class="phase-name">${x(ph.name)}</div>
+      <div class="phase-obj">${x(ph.objective || '')}</div>
+      ${dateStr}
+      <div class="phase-prog-bar"><div class="phase-prog-fill" style="width:${pct}%;background:${color}"></div></div>
+      <div class="phase-prog-txt"><span>${done}/${total} validées</span><span>${pct}%</span></div>
+    </div>`;
+  }).join('');
+}
+
+function renderDocs() {
+  const container = document.getElementById('docs-list');
+  if (!container) return;
+  const list = Object.values(documents).sort((a, b) => b.date.localeCompare(a.date));
+  if (!list.length) {
+    container.innerHTML = `<div class="doc-empty">📄 Aucun document. Ajoute un PDF via le bouton ci-dessus.</div>`;
+    return;
+  }
+  const byMonth = {};
+  list.forEach(doc => {
+    const k = doc.date.slice(0, 7);
+    if (!byMonth[k]) byMonth[k] = [];
+    byMonth[k].push(doc);
+  });
+  container.innerHTML = Object.keys(byMonth).sort((a, b) => b.localeCompare(a)).map(k => {
+    const [y, m] = k.split('-');
+    const label  = new Date(+y, +m - 1).toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' });
+    return `<div>
+      <div class="doc-month-label">${label}</div>
+      <div class="doc-list">
+        ${byMonth[k].map(doc => `
+          <div class="doc-row">
+            <div class="doc-icon">📄</div>
+            <div class="doc-info">
+              <div class="doc-name">${x(doc.name)}</div>
+              <div class="doc-meta">${doc.date} · ${formatSize(doc.size)}</div>
+            </div>
+            <button class="doc-btn" onclick="downloadDoc('${doc.id}')">↓ Télécharger</button>
+            <button class="doc-btn del" onclick="confirmDelDoc('${doc.id}')">✕</button>
+          </div>`).join('')}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function formatSize(bytes) {
+  if (!bytes) return '';
+  if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(0) + ' Ko';
+  return (bytes / 1024 / 1024).toFixed(1) + ' Mo';
+}
+
+function downloadDoc(id) {
+  const doc = documents[id];
+  if (!doc) return;
+  const a = document.createElement('a');
+  a.href = doc.data;
+  a.download = doc.name;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+}
+
+function confirmDelDoc(id) {
+  const doc = documents[id];
+  if (!doc || !confirm(`Supprimer "${doc.name}" ?`)) return;
+  delDocData(id);
+}
+
+function handleDocUpload(input) {
+  const file = input.files[0];
+  if (!file) return;
+  if (file.size > 3 * 1024 * 1024) {
+    alert('Le PDF dépasse 3 Mo. Veuillez choisir un fichier plus petit.');
+    input.value = '';
+    return;
+  }
+  const reader = new FileReader();
+  reader.onload = e => {
+    _pendingDoc = { name: file.name, data: e.target.result, size: file.size };
+    document.getElementById('docname').value = file.name.replace(/\.pdf$/i, '');
+    document.getElementById('docdate').value = new Date().toISOString().slice(0, 10);
+    document.getElementById('docUploadOv').classList.add('on');
+    input.value = '';
+  };
+  reader.readAsDataURL(file);
+}
+
+function confirmDocUpload() {
+  if (!_pendingDoc) return;
+  const name = document.getElementById('docname').value.trim();
+  if (!name) { document.getElementById('docname').focus(); return; }
+  saveDocData({
+    id:        'doc_' + Date.now(),
+    name,
+    date:      document.getElementById('docdate').value,
+    data:      _pendingDoc.data,
+    size:      _pendingDoc.size,
+    createdAt: Date.now()
+  });
+  _pendingDoc = null;
+  closeOv('docUploadOv');
+}
+
+
+// ── PHASE MODAL ──────────────────────────────────────────────────
+
+function openNewPhase() {
+  editPhaseId = null;
+  document.getElementById('pht').value = '';
+  document.getElementById('phq').value = 'Q1';
+  document.getElementById('phy').value = '2026';
+  document.getElementById('pho').value = '';
+  updatePhaseDates();
+  document.getElementById('phdel').style.display = 'none';
+  document.getElementById('phaseOv').classList.add('on');
+  setTimeout(() => document.getElementById('pht').focus(), 150);
+}
+
+function openPhase(id) {
+  const ph = phases[id];
+  if (!ph) return;
+  editPhaseId = id;
+  document.getElementById('pht').value = ph.name      || '';
+  document.getElementById('phq').value = ph.quarter   || 'Q1';
+  document.getElementById('phy').value = ph.year      || '2026';
+  document.getElementById('phs').value = ph.start     || '';
+  document.getElementById('phe').value = ph.end       || '';
+  document.getElementById('pho').value = ph.objective || '';
+  document.getElementById('phdel').style.display = '';
+  document.getElementById('phaseOv').classList.add('on');
+}
+
+function updatePhaseDates() {
+  const q    = document.getElementById('phq').value;
+  const year = document.getElementById('phy').value;
+  const dd   = QDATES[q];
+  if (dd) {
+    document.getElementById('phs').value = year + dd.start;
+    document.getElementById('phe').value = year + dd.end;
+  }
+}
+
+function savePhase() {
+  const name = document.getElementById('pht').value.trim();
+  if (!name) { document.getElementById('pht').focus(); return; }
+  const q    = document.getElementById('phq').value;
+  const year = parseInt(document.getElementById('phy').value) || 2026;
+  const id   = editPhaseId || 'ph_' + Date.now();
+  savePhaseData({
+    id, name, quarter: q, year,
+    start:     document.getElementById('phs').value,
+    end:       document.getElementById('phe').value,
+    objective: document.getElementById('pho').value.trim(),
+    color:     QCOLORS[q] || '#6b7280',
+    createdAt: (phases[id] && phases[id].createdAt) || Date.now(),
+    updatedAt: Date.now()
+  });
+  closeOv('phaseOv');
+}
+
+function delPhase() {
+  if (!editPhaseId || !confirm('Supprimer cette phase ?')) return;
+  delPhaseData(editPhaseId);
+  closeOv('phaseOv');
+}
+
+function populatePhaseDropdown() {
+  const sel = document.getElementById('mph');
+  if (!sel) return;
+  const cur = sel.value;
+  sel.innerHTML = '<option value="">— Aucune phase —</option>';
+  Object.values(phases)
+    .sort((a, b) => a.year !== b.year ? a.year - b.year : a.quarter.localeCompare(b.quarter))
+    .forEach(ph => {
+      const opt = document.createElement('option');
+      opt.value = ph.id;
+      opt.textContent = `${ph.quarter} ${ph.year} — ${ph.name}`;
+      sel.appendChild(opt);
+    });
+  if (cur) sel.value = cur;
+}
+
+function populatePhaseSidebar() {
+  const sel = document.getElementById('fph');
+  if (!sel) return;
+  const cur = sel.value;
+  sel.innerHTML = '<option value="">Toutes les phases</option>';
+  Object.values(phases)
+    .sort((a, b) => a.year !== b.year ? a.year - b.year : a.quarter.localeCompare(b.quarter))
+    .forEach(ph => {
+      const opt = document.createElement('option');
+      opt.value = ph.id;
+      opt.textContent = `${ph.quarter} ${ph.year} — ${ph.name}`;
+      sel.appendChild(opt);
+    });
+  if (cur) sel.value = cur;
+}
+
+
+// ── FIREBASE PHASES & DOCS ───────────────────────────────────────
+
+function savePhaseData(ph) {
+  if (_db) {
+    setSS('saving');
+    const { ref, set } = window._fb;
+    set(ref(_db, 'ava2i/phases/' + ph.id), ph)
+      .then(() => setSS('connected'))
+      .catch(() => setSS('offline'));
+  }
+  phases[ph.id] = ph;
+  lsSavePhases();
+  renderPhases();
+  populatePhaseSidebar();
+  if (curView === 'timeline') renderTimeline();
+}
+
+function delPhaseData(id) {
+  if (_db) { const { ref, remove } = window._fb; remove(ref(_db, 'ava2i/phases/' + id)); }
+  delete phases[id];
+  lsSavePhases();
+  renderPhases();
+  populatePhaseSidebar();
+  if (curView === 'timeline') renderTimeline();
+}
+
+function saveDocData(doc) {
+  if (_db) {
+    setSS('saving');
+    const { ref, set } = window._fb;
+    set(ref(_db, 'ava2i/documents/' + doc.id), doc)
+      .then(() => setSS('connected'))
+      .catch(() => setSS('offline'));
+  }
+  documents[doc.id] = doc;
+  lsSaveDocs();
+  renderDocs();
+}
+
+function delDocData(id) {
+  if (_db) { const { ref, remove } = window._fb; remove(ref(_db, 'ava2i/documents/' + id)); }
+  delete documents[id];
+  lsSaveDocs();
+  renderDocs();
 }

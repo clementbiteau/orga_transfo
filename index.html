@@ -30,6 +30,7 @@
   <div class="nav-tabs">
     <button class="ntab on" onclick="switchTab('roadmap', this)">Roadmap</button>
     <button class="ntab"    onclick="switchTab('people',  this)">Consultants</button>
+    <button class="ntab"    onclick="switchTab('board',   this)">Board</button>
   </div>
 
   <div class="nav-right">
@@ -204,6 +205,39 @@
       <div class="pp-grid" id="pp-grid"></div>
     </div><!-- /panel-people -->
 
+
+    <!-- ─── PANEL : BOARD ─── -->
+    <div class="panel" id="panel-board">
+      <div class="bph">
+        <div class="bp-title">Board AVA2i</div>
+        <div class="bp-sub">Vue décisionnaire · Phases &amp; Documents</div>
+      </div>
+      <div class="board-body">
+
+        <!-- Phases de transformation -->
+        <div>
+          <div class="board-section-title">
+            <span>Phases de transformation</span>
+            <button class="btn btn-blue" onclick="openNewPhase()">+ Nouvelle phase</button>
+          </div>
+          <div class="phases-grid" id="phases-grid"></div>
+        </div>
+
+        <!-- Documents & Comptes Rendus -->
+        <div>
+          <div class="board-section-title">
+            <span>Documents &amp; Comptes Rendus</span>
+            <label class="btn btn-ghost" style="cursor:pointer">
+              + Ajouter un PDF
+              <input type="file" accept="application/pdf" id="doc-input" style="display:none" onchange="handleDocUpload(this)">
+            </label>
+          </div>
+          <div id="docs-list"></div>
+        </div>
+
+      </div>
+    </div><!-- /panel-board -->
+
   </main>
 </div><!-- /wrap -->
 
@@ -256,6 +290,10 @@
         </div>
         <div class="mf"><label>Owner</label><input id="mo" placeholder="Responsable…"></div>
         <div class="mf"><label>Date début</label><input type="date" id="mst"></div>
+        <div class="mf full">
+          <label>Phase</label>
+          <select id="mph"><option value="">— Aucune phase —</option></select>
+        </div>
         <div class="mf full"><label>Deadline</label><input type="date" id="mdl"></div>
         <div class="mf full">
           <label>Description</label>
@@ -314,6 +352,78 @@
       <div class="mactions">
         <button class="btn btn-ghost" onclick="closeOv('setupOv')">Fermer</button>
         <button class="btn btn-blue"  onclick="window.open('https://console.firebase.google.com','_blank');closeOv('setupOv')">Ouvrir Firebase →</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<!-- ══════════════════════════════════════════════════
+     MODAL : PHASE (création / édition)
+══════════════════════════════════════════════════ -->
+<div class="overlay" id="phaseOv" onclick="ovc(event,'phaseOv')">
+  <div class="modal" style="width:480px">
+    <div class="mh">
+      <input class="m-title-inp" id="pht" placeholder="Nom de la phase…">
+      <button class="mx" onclick="closeOv('phaseOv')">✕</button>
+    </div>
+    <div class="mb">
+      <div class="mgrid">
+        <div class="mf">
+          <label>Trimestre</label>
+          <select id="phq" onchange="updatePhaseDates()">
+            <option value="Q1">Q1 — Jan à Mars</option>
+            <option value="Q2">Q2 — Avr à Juin</option>
+            <option value="Q3">Q3 — Juil à Sep</option>
+            <option value="Q4">Q4 — Oct à Déc</option>
+          </select>
+        </div>
+        <div class="mf">
+          <label>Année</label>
+          <select id="phy" onchange="updatePhaseDates()">
+            <option value="2025">2025</option>
+            <option value="2026" selected>2026</option>
+            <option value="2027">2027</option>
+          </select>
+        </div>
+        <div class="mf"><label>Date début</label><input type="date" id="phs"></div>
+        <div class="mf"><label>Date fin</label><input type="date" id="phe"></div>
+        <div class="mf full">
+          <label>Objectif</label>
+          <textarea id="pho" placeholder="Objectif de cette phase…"></textarea>
+        </div>
+      </div>
+    </div>
+    <div class="mfoot">
+      <button class="btn-del" id="phdel" onclick="delPhase()" style="display:none">Supprimer</button>
+      <div class="mactions">
+        <button class="btn btn-ghost" onclick="closeOv('phaseOv')">Annuler</button>
+        <button class="btn btn-blue"  onclick="savePhase()">Enregistrer</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<!-- ══════════════════════════════════════════════════
+     MODAL : UPLOAD DOCUMENT
+══════════════════════════════════════════════════ -->
+<div class="overlay" id="docUploadOv" onclick="ovc(event,'docUploadOv')">
+  <div class="modal" style="width:400px">
+    <div class="mh">
+      <div style="font-size:14px;font-weight:700;color:var(--g900)">Ajouter un document PDF</div>
+      <button class="mx" onclick="closeOv('docUploadOv');_pendingDoc=null">✕</button>
+    </div>
+    <div class="mb">
+      <div class="mgrid">
+        <div class="mf full"><label>Titre du document</label><input id="docname" placeholder="Compte Rendu réunion…"></div>
+        <div class="mf full"><label>Date de la réunion</label><input type="date" id="docdate"></div>
+      </div>
+    </div>
+    <div class="mfoot">
+      <div class="mactions">
+        <button class="btn btn-ghost" onclick="closeOv('docUploadOv');_pendingDoc=null">Annuler</button>
+        <button class="btn btn-blue"  onclick="confirmDocUpload()">Ajouter</button>
       </div>
     </div>
   </div>
