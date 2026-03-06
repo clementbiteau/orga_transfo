@@ -1,326 +1,90 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>AVA2i — Roadmap Transformation</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-<script type="module">
-  import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
-  import { getDatabase, ref, onValue, set, remove } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js';
-  window._fb = { initializeApp, getDatabase, ref, onValue, set, remove };
-</script>
-<style>
-*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AVA2i — Roadmap Transformation</title>
 
-:root {
-  --white:   #ffffff;
-  --bg:      #f7f8fa;
-  --g100:    #f3f4f6;
-  --g200:    #e5e7eb;
-  --g300:    #d1d5db;
-  --g400:    #9ca3af;
-  --g500:    #6b7280;
-  --g600:    #4b5563;
-  --g700:    #374151;
-  --g800:    #1f2937;
-  --g900:    #111827;
-  --blue:    #2563eb;
-  --blue-bg: #eff6ff;
-  --green:   #16a34a;
-  --green-bg:#f0fdf4;
-  --amber:   #b45309;
-  --amber-bg:#fffbeb;
-  --red:     #dc2626;
-  --red-bg:  #fef2f2;
-  --purple:  #7c3aed;
-  --purple-bg:#f5f3ff;
-  --nav:     52px;
-  --side:    216px;
-  --ff:      'Inter', -apple-system, sans-serif;
-  --r:       6px;
-  --sh:      0 1px 3px rgba(0,0,0,.08), 0 1px 2px rgba(0,0,0,.04);
-  --sh-md:   0 4px 12px rgba(0,0,0,.1);
-}
+  <!-- Polices -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 
-body { font-family: var(--ff); background: var(--bg); color: var(--g900); font-size: 13px; line-height: 1.5; -webkit-font-smoothing: antialiased; }
-::-webkit-scrollbar { width: 4px; height: 4px; }
-::-webkit-scrollbar-thumb { background: var(--g300); border-radius: 4px; }
+  <!-- Styles -->
+  <link rel="stylesheet" href="styles.css">
 
-/* NAV */
-.nav {
-  position: fixed; top: 0; left: 0; right: 0; height: var(--nav); z-index: 200;
-  background: var(--white); border-bottom: 1px solid var(--g200);
-  display: flex; align-items: center; padding: 0 18px; gap: 8px;
-}
-.nav-brand { font-size: 13px; font-weight: 700; color: var(--g900); margin-right: 20px; letter-spacing: -.01em; }
-.nav-brand b { color: var(--blue); }
-.nav-tabs { display: flex; }
-.ntab { font-size: 13px; font-weight: 500; color: var(--g500); padding: 6px 12px; border: none; background: none; cursor: pointer; border-radius: var(--r); transition: all .12s; }
-.ntab:hover { color: var(--g800); background: var(--g100); }
-.ntab.on { color: var(--g900); background: var(--g100); font-weight: 600; }
-.nav-right { margin-left: auto; display: flex; align-items: center; gap: 8px; }
-.sync-badge { font-size: 11px; font-weight: 500; display: flex; align-items: center; gap: 5px; padding: 4px 10px; border-radius: 100px; border: 1px solid var(--g200); color: var(--g500); }
-.sdot { width: 6px; height: 6px; border-radius: 50%; background: var(--g300); }
-.btn { font-family: var(--ff); font-size: 13px; font-weight: 500; padding: 6px 14px; border-radius: var(--r); cursor: pointer; transition: all .12s; }
-.btn-ghost { background: var(--white); border: 1px solid var(--g200); color: var(--g600); }
-.btn-ghost:hover { border-color: var(--g300); background: var(--g100); }
-.btn-blue { background: var(--blue); border: 1px solid var(--blue); color: #fff; }
-.btn-blue:hover { background: #1d4ed8; border-color: #1d4ed8; }
-
-/* LAYOUT */
-.wrap { display: flex; padding-top: var(--nav); min-height: 100vh; }
-.side {
-  position: fixed; top: var(--nav); left: 0; bottom: 0; width: var(--side);
-  background: var(--white); border-right: 1px solid var(--g200);
-  padding: 14px 10px; overflow-y: auto; z-index: 100;
-  display: flex; flex-direction: column; gap: 2px;
-}
-.main { margin-left: var(--side); flex: 1; min-width: 0; }
-
-/* SIDEBAR */
-.sf-label { font-size: 11px; font-weight: 600; color: var(--g400); text-transform: uppercase; letter-spacing: .05em; padding: 10px 6px 5px; }
-.sf-input, .sf-select {
-  width: 100%; padding: 6px 9px; font-family: var(--ff); font-size: 13px;
-  border: 1px solid var(--g200); border-radius: var(--r); background: var(--white);
-  color: var(--g700); margin-bottom: 4px; transition: border-color .12s, box-shadow .12s;
-}
-.sf-input:focus, .sf-select:focus { outline: none; border-color: var(--blue); box-shadow: 0 0 0 3px rgba(37,99,235,.1); }
-.chips { display: flex; flex-wrap: wrap; gap: 4px; margin-bottom: 6px; }
-.chip {
-  font-size: 11px; font-weight: 500; padding: 3px 9px; border-radius: 100px;
-  border: 1px solid var(--g200); color: var(--g500); background: var(--white); cursor: pointer; transition: all .12s;
-}
-.chip:hover { border-color: var(--blue); color: var(--blue); }
-.chip.on { background: var(--blue-bg); border-color: #bfdbfe; color: var(--blue); }
-.sf-div { height: 1px; background: var(--g100); margin: 8px 0; }
-.sf-clear { font-size: 12px; color: var(--g400); border: none; background: none; cursor: pointer; padding: 5px 6px; width: 100%; text-align: left; border-radius: var(--r); }
-.sf-clear:hover { background: var(--g100); color: var(--g600); }
-.sf-stat { font-size: 11px; color: var(--g400); text-align: center; padding: 8px 6px; margin-top: auto; }
-.sf-stat strong { color: var(--g700); }
-
-/* PANELS */
-.panel { display: none; }
-.panel.on { display: block; }
-
-/* PAGE HEADER */
-.ph {
-  background: var(--white); border-bottom: 1px solid var(--g200);
-  padding: 18px 22px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px;
-}
-.ph-title { font-size: 15px; font-weight: 700; color: var(--g900); }
-.ph-sub { font-size: 12px; color: var(--g400); margin-top: 2px; }
-.view-toggle { display: flex; background: var(--g100); border-radius: var(--r); padding: 2px; }
-.vbtn { font-family: var(--ff); font-size: 12px; font-weight: 500; color: var(--g500); padding: 5px 12px; border: none; background: none; border-radius: 4px; cursor: pointer; transition: all .1s; }
-.vbtn.on { background: var(--white); color: var(--g800); font-weight: 600; box-shadow: 0 1px 2px rgba(0,0,0,.06); }
-
-/* LIST VIEW */
-.lv { padding: 14px 22px; }
-.lv-group { margin-bottom: 3px; }
-.lv-gh { display: flex; align-items: center; gap: 6px; padding: 6px 8px; cursor: pointer; border-radius: var(--r); }
-.lv-gh:hover { background: var(--g100); }
-.lv-arr { font-size: 9px; color: var(--g400); transition: transform .15s; width: 12px; }
-.lv-arr.open { transform: rotate(90deg); }
-.lv-gname { font-size: 12px; font-weight: 600; }
-.lv-gcount { font-size: 11px; color: var(--g400); background: var(--g100); padding: 1px 7px; border-radius: 100px; }
-
-.tbl { width: 100%; background: var(--white); border: 1px solid var(--g200); border-radius: var(--r); overflow: hidden; margin-bottom: 4px; border-collapse: collapse; }
-.tbl-head { display: grid; grid-template-columns: 20px 1fr 100px 85px 80px 130px 90px 30px; padding: 8px 12px; border-bottom: 1px solid var(--g100); }
-.tbl-head span { font-size: 11px; font-weight: 600; color: var(--g400); text-transform: uppercase; letter-spacing: .04em; }
-.trow { display: grid; grid-template-columns: 20px 1fr 100px 85px 80px 130px 90px 30px; padding: 9px 12px; border-bottom: 1px solid var(--g100); cursor: pointer; align-items: center; transition: background .1s; }
-.trow:last-child { border-bottom: none; }
-.trow:hover { background: var(--bg); }
-.cell-title { font-size: 13px; font-weight: 500; color: var(--g800); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 320px; }
-.cell-sub { font-size: 11px; color: var(--g400); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 320px; margin-top: 1px; }
-.tdot { width: 7px; height: 7px; border-radius: 2px; }
-
-/* BADGES */
-.badge { display: inline-block; font-size: 11px; font-weight: 500; padding: 2px 8px; border-radius: 100px; white-space: nowrap; }
-.bs-todo    { background: var(--g100);    color: var(--g500); }
-.bs-wip     { background: var(--amber-bg);color: var(--amber); }
-.bs-review  { background: var(--purple-bg);color:var(--purple); }
-.bs-done    { background: var(--green-bg);color: var(--green); }
-.bs-block   { background: var(--red-bg);  color: var(--red); }
-.bp-basse   { background: var(--blue-bg); color: var(--blue); }
-.bp-moyenne { background: var(--amber-bg);color: var(--amber); }
-.bp-haute   { background: var(--red-bg);  color: #b91c1c; }
-.bp-critique{ background: #fff1f2;        color: #be123c; font-weight: 700; }
-
-.type-pill { font-size: 11px; font-weight: 500; padding: 2px 8px; border-radius: 4px; white-space: nowrap; }
-.owner { display: inline-flex; align-items: center; gap: 5px; font-size: 12px; color: var(--g600); max-width: 120px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
-.oav { width: 18px; height: 18px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 9px; font-weight: 700; color: #fff; flex-shrink: 0; }
-.dl { font-size: 12px; color: var(--g400); }
-.dl.late { color: var(--red); font-weight: 500; }
-.dl.soon { color: var(--amber); font-weight: 500; }
-.row-btn { width: 24px; height: 24px; border: none; background: none; color: var(--g300); cursor: pointer; border-radius: 4px; font-size: 13px; display: flex; align-items: center; justify-content: center; }
-.row-btn:hover { background: var(--g100); color: var(--g600); }
-
-/* KANBAN */
-.kb { display: flex; gap: 10px; padding: 14px 22px; overflow-x: auto; min-height: calc(100vh - 110px); }
-.kb-col { flex: 0 0 240px; display: flex; flex-direction: column; gap: 6px; }
-.kb-hd {
-  display: flex; align-items: center; justify-content: space-between;
-  padding: 8px 10px; background: var(--white); border: 1px solid var(--g200);
-  border-radius: var(--r); font-size: 12px; font-weight: 600;
-}
-.kb-n { font-size: 11px; color: var(--g400); background: var(--g100); padding: 1px 7px; border-radius: 100px; }
-.kb-body {
-  flex: 1; background: var(--g100); border-radius: var(--r); padding: 6px;
-  min-height: 180px; display: flex; flex-direction: column; gap: 5px;
-  border: 2px dashed transparent; transition: all .15s;
-}
-.kb-body.over { background: var(--blue-bg); border-color: #bfdbfe; }
-.kcard {
-  background: var(--white); border: 1px solid var(--g200); border-radius: var(--r);
-  padding: 10px 12px; cursor: pointer; box-shadow: var(--sh); transition: box-shadow .15s, border-color .15s;
-}
-.kcard:hover { box-shadow: var(--sh-md); border-color: var(--g300); }
-.kcard.dragging { opacity: .35; }
-.kcard-title { font-size: 13px; font-weight: 600; color: var(--g800); line-height: 1.35; margin-bottom: 8px; }
-.kcard-footer { display: flex; align-items: center; justify-content: space-between; gap: 4px; }
-
-/* TIMELINE */
-.tl { padding: 14px 22px; }
-.tl-box { background: var(--white); border: 1px solid var(--g200); border-radius: var(--r); overflow: hidden; }
-.tl-hrow { display: flex; border-bottom: 1px solid var(--g200); background: var(--bg); }
-.tl-llabel-h { width: 130px; flex-shrink: 0; padding: 9px 12px; font-size: 11px; font-weight: 600; color: var(--g400); text-transform: uppercase; letter-spacing: .04em; border-right: 1px solid var(--g200); }
-.tl-months { flex: 1; display: flex; }
-.tl-mo { flex: 1; padding: 9px 8px; font-size: 11px; font-weight: 600; color: var(--g400); text-transform: uppercase; letter-spacing: .04em; border-right: 1px solid var(--g100); }
-.tl-mo.cur { color: var(--blue); }
-.tl-row { display: flex; border-bottom: 1px solid var(--g100); }
-.tl-row:last-child { border-bottom: none; }
-.tl-llabel { width: 130px; flex-shrink: 0; padding: 8px 12px; font-size: 12px; color: var(--g500); font-weight: 500; border-right: 1px solid var(--g200); display: flex; align-items: flex-start; padding-top: 12px; }
-.tl-area { flex: 1; position: relative; min-height: 48px; }
-.tl-bar { position: absolute; height: 26px; top: 10px; border-radius: 4px; display: flex; align-items: center; padding: 0 8px; font-size: 11px; font-weight: 600; white-space: nowrap; overflow: hidden; cursor: pointer; transition: filter .12s; }
-.tl-bar:hover { filter: brightness(.9); }
-.tl-now { position: absolute; top: 0; bottom: 0; width: 1px; background: var(--blue); opacity: .4; pointer-events: none; }
-
-/* MODAL */
-.overlay {
-  position: fixed; inset: 0; z-index: 500; background: rgba(0,0,0,.3);
-  display: flex; align-items: center; justify-content: center;
-  opacity: 0; pointer-events: none; transition: opacity .15s;
-}
-.overlay.on { opacity: 1; pointer-events: all; }
-.modal {
-  background: var(--white); border-radius: 10px; border: 1px solid var(--g200);
-  box-shadow: 0 20px 40px rgba(0,0,0,.12); width: 540px; max-width: 95vw; max-height: 90vh; overflow-y: auto;
-  transform: translateY(10px); opacity: 0; transition: transform .2s, opacity .15s;
-}
-.overlay.on .modal { transform: none; opacity: 1; }
-.mh { padding: 18px 20px 14px; border-bottom: 1px solid var(--g100); display: flex; align-items: flex-start; gap: 10px; }
-.m-title-inp { font-family: var(--ff); font-size: 15px; font-weight: 700; color: var(--g900); border: none; background: none; width: 100%; outline: none; }
-.m-title-inp::placeholder { color: var(--g300); }
-.mx { width: 26px; height: 26px; border: 1px solid var(--g200); background: var(--white); border-radius: 5px; cursor: pointer; color: var(--g400); font-size: 12px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
-.mx:hover { background: var(--g100); color: var(--g700); }
-.mb { padding: 14px 20px; }
-.mgrid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-.mf { display: flex; flex-direction: column; gap: 4px; }
-.mf.full { grid-column: 1/-1; }
-.mf label { font-size: 11px; font-weight: 600; color: var(--g400); text-transform: uppercase; letter-spacing: .04em; }
-.mf input, .mf select, .mf textarea {
-  font-family: var(--ff); font-size: 13px; color: var(--g700);
-  padding: 7px 9px; border: 1px solid var(--g200); border-radius: var(--r);
-  background: var(--white); transition: border-color .12s, box-shadow .12s;
-}
-.mf input:focus, .mf select:focus, .mf textarea:focus { outline: none; border-color: var(--blue); box-shadow: 0 0 0 3px rgba(37,99,235,.1); }
-.mf textarea { resize: vertical; min-height: 68px; }
-.mfoot { padding: 12px 20px; border-top: 1px solid var(--g100); display: flex; align-items: center; justify-content: space-between; }
-.btn-del { font-family: var(--ff); font-size: 12px; color: var(--red); background: none; border: 1px solid var(--g200); padding: 6px 12px; border-radius: var(--r); cursor: pointer; }
-.btn-del:hover { background: var(--red-bg); border-color: #fca5a5; }
-.mactions { display: flex; gap: 6px; margin-left: auto; }
-
-/* PEOPLE */
-.pph { padding: 18px 22px 14px; background: var(--white); border-bottom: 1px solid var(--g200); }
-.pp-title { font-size: 15px; font-weight: 700; color: var(--g900); }
-.pp-sub { font-size: 12px; color: var(--g400); margin-top: 2px; }
-.pp-kpis { display: flex; margin: 12px 0 14px; border: 1px solid var(--g200); border-radius: var(--r); overflow: hidden; width: fit-content; background: var(--white); }
-.kpi { padding: 10px 18px; border-right: 1px solid var(--g200); }
-.kpi:last-child { border-right: none; }
-.kpi-n { font-size: 18px; font-weight: 700; color: var(--g900); }
-.kpi-l { font-size: 11px; color: var(--g400); font-weight: 500; }
-.pp-filt { display: flex; gap: 6px; flex-wrap: wrap; }
-.pp-grid { padding: 14px 22px; display: grid; grid-template-columns: repeat(auto-fill, minmax(230px,1fr)); gap: 8px; }
-.pc {
-  background: var(--white); border: 1px solid var(--g200); border-radius: var(--r);
-  padding: 12px; transition: box-shadow .12s;
-}
-.pc:hover { box-shadow: var(--sh); }
-.pc.hidden { display: none; }
-.pc-head { display: flex; align-items: center; gap: 9px; margin-bottom: 8px; }
-.pc-av { width: 32px; height: 32px; border-radius: 7px; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; color: #fff; flex-shrink: 0; }
-.pc-name { font-size: 13px; font-weight: 600; color: var(--g800); }
-.pc-titre { font-size: 11px; color: var(--g400); margin-top: 1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 155px; }
-.pc-tags { display: flex; flex-wrap: wrap; gap: 3px; }
-.pc-tag { font-size: 11px; font-weight: 500; padding: 2px 7px; border-radius: 100px; border: 1px solid var(--g200); color: var(--g500); }
-
-/* EMPTY */
-.empty { text-align: center; padding: 56px 20px; }
-.ei { font-size: 28px; margin-bottom: 10px; opacity: .3; }
-.eh { font-size: 14px; font-weight: 600; color: var(--g600); margin-bottom: 5px; }
-.ep { font-size: 12px; color: var(--g400); margin-bottom: 14px; }
-
-/* SETUP MODAL */
-.setup-step { background: var(--bg); border-radius: var(--r); padding: 12px 14px; margin-bottom: 8px; }
-.ss-title { font-size: 11px; font-weight: 600; color: var(--g400); text-transform: uppercase; letter-spacing: .05em; margin-bottom: 6px; }
-.setup-step ol { font-size: 13px; color: var(--g600); line-height: 2; padding-left: 16px; }
-.setup-step code { background: var(--white); border: 1px solid var(--g200); padding: 1px 5px; border-radius: 3px; font-size: 12px; color: var(--blue); }
-.info-box { background: var(--blue-bg); border: 1px solid #bfdbfe; border-radius: var(--r); padding: 10px 14px; font-size: 13px; color: var(--g600); line-height: 1.6; }
-</style>
+  <!-- Firebase (chargé en module ES pour exposer les fonctions via window._fb) -->
+  <script type="module">
+    import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
+    import { getDatabase, ref, onValue, set, remove } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js';
+    window._fb = { initializeApp, getDatabase, ref, onValue, set, remove };
+  </script>
 </head>
 <body>
 
+<!-- ══════════════════════════════════════════════════
+     BARRE DE NAVIGATION
+══════════════════════════════════════════════════ -->
 <nav class="nav">
   <div class="nav-brand">AVA2i <b>·</b> Roadmap</div>
+
   <div class="nav-tabs">
-    <button class="ntab on" onclick="switchTab('roadmap',this)">Roadmap</button>
-    <button class="ntab" onclick="switchTab('people',this)">Consultants</button>
+    <button class="ntab on" onclick="switchTab('roadmap', this)">Roadmap</button>
+    <button class="ntab"    onclick="switchTab('people',  this)">Consultants</button>
   </div>
+
   <div class="nav-right">
-    <div class="sync-badge"><span class="sdot" id="sdot"></span><span id="stxt">Local</span></div>
+    <div class="sync-badge">
+      <span class="sdot" id="sdot"></span>
+      <span id="stxt">Local</span>
+    </div>
     <button class="btn btn-ghost" onclick="openSetup()">Configurer sync</button>
-    <button class="btn btn-blue" onclick="openNew()">+ Nouvelle tâche</button>
+    <button class="btn btn-blue"  onclick="openNew()">+ Nouvelle tâche</button>
   </div>
 </nav>
 
+
+<!-- ══════════════════════════════════════════════════
+     LAYOUT PRINCIPAL
+══════════════════════════════════════════════════ -->
 <div class="wrap">
+
+  <!-- SIDEBAR (filtres) -->
   <aside class="side" id="sidebar">
     <div class="sf-label">Recherche</div>
     <input class="sf-input" id="fs" placeholder="Titre, owner…" oninput="render()">
 
     <div class="sf-label">Statut</div>
     <div class="chips">
-      <span class="chip" data-g="status" data-v="todo" onclick="tog(this)">À faire</span>
-      <span class="chip" data-g="status" data-v="wip" onclick="tog(this)">En cours</span>
+      <span class="chip" data-g="status" data-v="todo"   onclick="tog(this)">À faire</span>
+      <span class="chip" data-g="status" data-v="wip"    onclick="tog(this)">En cours</span>
       <span class="chip" data-g="status" data-v="review" onclick="tog(this)">Review</span>
-      <span class="chip" data-g="status" data-v="done" onclick="tog(this)">Terminé</span>
-      <span class="chip" data-g="status" data-v="block" onclick="tog(this)">Bloqué</span>
+      <span class="chip" data-g="status" data-v="done"   onclick="tog(this)">Terminé</span>
+      <span class="chip" data-g="status" data-v="block"  onclick="tog(this)">Bloqué</span>
     </div>
 
     <div class="sf-label">Priorité</div>
     <div class="chips">
       <span class="chip" data-g="priority" data-v="critique" onclick="tog(this)">Critique</span>
-      <span class="chip" data-g="priority" data-v="haute" onclick="tog(this)">Haute</span>
-      <span class="chip" data-g="priority" data-v="moyenne" onclick="tog(this)">Moyenne</span>
-      <span class="chip" data-g="priority" data-v="basse" onclick="tog(this)">Basse</span>
+      <span class="chip" data-g="priority" data-v="haute"    onclick="tog(this)">Haute</span>
+      <span class="chip" data-g="priority" data-v="moyenne"  onclick="tog(this)">Moyenne</span>
+      <span class="chip" data-g="priority" data-v="basse"    onclick="tog(this)">Basse</span>
     </div>
 
     <div class="sf-label">Type</div>
     <div class="chips">
-      <span class="chip" data-g="type" data-v="Structure" onclick="tog(this)">Structure</span>
+      <span class="chip" data-g="type" data-v="Structure"   onclick="tog(this)">Structure</span>
       <span class="chip" data-g="type" data-v="Recrutement" onclick="tog(this)">Recrutement</span>
-      <span class="chip" data-g="type" data-v="Formation" onclick="tog(this)">Formation</span>
-      <span class="chip" data-g="type" data-v="Produit" onclick="tog(this)">Produit</span>
+      <span class="chip" data-g="type" data-v="Formation"   onclick="tog(this)">Formation</span>
+      <span class="chip" data-g="type" data-v="Produit"     onclick="tog(this)">Produit</span>
       <span class="chip" data-g="type" data-v="Gouvernance" onclick="tog(this)">Gouvernance</span>
-      <span class="chip" data-g="type" data-v="Client" onclick="tog(this)">Client</span>
+      <span class="chip" data-g="type" data-v="Client"      onclick="tog(this)">Client</span>
     </div>
 
     <div class="sf-label">Centre</div>
     <div class="chips">
-      <span class="chip" data-g="centre" data-v="C01" onclick="tog(this)">C01</span>
-      <span class="chip" data-g="centre" data-v="C02" onclick="tog(this)">C02</span>
-      <span class="chip" data-g="centre" data-v="C03" onclick="tog(this)">C03</span>
+      <span class="chip" data-g="centre" data-v="C01"        onclick="tog(this)">C01</span>
+      <span class="chip" data-g="centre" data-v="C02"        onclick="tog(this)">C02</span>
+      <span class="chip" data-g="centre" data-v="C03"        onclick="tog(this)">C03</span>
       <span class="chip" data-g="centre" data-v="Transversal" onclick="tog(this)">Transversal</span>
     </div>
 
@@ -341,22 +105,27 @@ body { font-family: var(--ff); background: var(--bg); color: var(--g900); font-s
     <div class="sf-stat" id="fcount"><strong>0</strong> tâche(s) affichée(s)</div>
   </aside>
 
+
+  <!-- CONTENU PRINCIPAL -->
   <main class="main">
 
-    <!-- ROADMAP -->
+    <!-- ─── PANEL : ROADMAP ─── -->
     <div class="panel on" id="panel-roadmap">
+
+      <!-- En-tête avec toggle de vue -->
       <div class="ph">
         <div>
           <div class="ph-title">Roadmap Transformation AVA2i</div>
           <div class="ph-sub" id="ph-sub">0 tâche · 2026</div>
         </div>
         <div class="view-toggle">
-          <button class="vbtn on" id="vb-list" onclick="switchView('list')">Liste</button>
-          <button class="vbtn" id="vb-kanban" onclick="switchView('kanban')">Kanban</button>
-          <button class="vbtn" id="vb-timeline" onclick="switchView('timeline')">Timeline</button>
+          <button class="vbtn on" id="vb-list"     onclick="switchView('list')">Liste</button>
+          <button class="vbtn"    id="vb-kanban"   onclick="switchView('kanban')">Kanban</button>
+          <button class="vbtn"    id="vb-timeline" onclick="switchView('timeline')">Timeline</button>
         </div>
       </div>
 
+      <!-- Vue : Liste -->
       <div id="v-list" class="lv">
         <div id="list-body"></div>
         <div class="empty" id="list-empty" style="display:none">
@@ -367,14 +136,31 @@ body { font-family: var(--ff); background: var(--bg); color: var(--g900); font-s
         </div>
       </div>
 
+      <!-- Vue : Kanban -->
       <div id="v-kanban" class="kb" style="display:none">
-        <div class="kb-col"><div class="kb-hd"><span style="color:var(--g500)">À faire</span><span class="kb-n" id="kn-todo">0</span></div><div class="kb-body" id="kb-todo" ondragover="kdo(event,'todo')" ondrop="kdd(event,'todo')" ondragleave="kdl('todo')"></div></div>
-        <div class="kb-col"><div class="kb-hd"><span style="color:var(--amber)">En cours</span><span class="kb-n" id="kn-wip">0</span></div><div class="kb-body" id="kb-wip" ondragover="kdo(event,'wip')" ondrop="kdd(event,'wip')" ondragleave="kdl('wip')"></div></div>
-        <div class="kb-col"><div class="kb-hd"><span style="color:var(--purple)">Review</span><span class="kb-n" id="kn-review">0</span></div><div class="kb-body" id="kb-review" ondragover="kdo(event,'review')" ondrop="kdd(event,'review')" ondragleave="kdl('review')"></div></div>
-        <div class="kb-col"><div class="kb-hd"><span style="color:var(--red)">Bloqué</span><span class="kb-n" id="kn-block">0</span></div><div class="kb-body" id="kb-block" ondragover="kdo(event,'block')" ondrop="kdd(event,'block')" ondragleave="kdl('block')"></div></div>
-        <div class="kb-col"><div class="kb-hd"><span style="color:var(--green)">Terminé</span><span class="kb-n" id="kn-done">0</span></div><div class="kb-body" id="kb-done" ondragover="kdo(event,'done')" ondrop="kdd(event,'done')" ondragleave="kdl('done')"></div></div>
+        <div class="kb-col">
+          <div class="kb-hd"><span style="color:var(--g500)">À faire</span><span class="kb-n" id="kn-todo">0</span></div>
+          <div class="kb-body" id="kb-todo" ondragover="kdo(event,'todo')" ondrop="kdd(event,'todo')" ondragleave="kdl('todo')"></div>
+        </div>
+        <div class="kb-col">
+          <div class="kb-hd"><span style="color:var(--amber)">En cours</span><span class="kb-n" id="kn-wip">0</span></div>
+          <div class="kb-body" id="kb-wip" ondragover="kdo(event,'wip')" ondrop="kdd(event,'wip')" ondragleave="kdl('wip')"></div>
+        </div>
+        <div class="kb-col">
+          <div class="kb-hd"><span style="color:var(--purple)">Review</span><span class="kb-n" id="kn-review">0</span></div>
+          <div class="kb-body" id="kb-review" ondragover="kdo(event,'review')" ondrop="kdd(event,'review')" ondragleave="kdl('review')"></div>
+        </div>
+        <div class="kb-col">
+          <div class="kb-hd"><span style="color:var(--red)">Bloqué</span><span class="kb-n" id="kn-block">0</span></div>
+          <div class="kb-body" id="kb-block" ondragover="kdo(event,'block')" ondrop="kdd(event,'block')" ondragleave="kdl('block')"></div>
+        </div>
+        <div class="kb-col">
+          <div class="kb-hd"><span style="color:var(--green)">Terminé</span><span class="kb-n" id="kn-done">0</span></div>
+          <div class="kb-body" id="kb-done" ondragover="kdo(event,'done')" ondrop="kdd(event,'done')" ondragleave="kdl('done')"></div>
+        </div>
       </div>
 
+      <!-- Vue : Timeline -->
       <div id="v-timeline" class="tl" style="display:none">
         <div id="tl-root"></div>
         <div class="empty" id="tl-empty" style="display:none">
@@ -383,9 +169,11 @@ body { font-family: var(--ff); background: var(--bg); color: var(--g900); font-s
           <div class="ep">Ajoute des dates de début et fin dans une tâche.</div>
         </div>
       </div>
-    </div>
 
-    <!-- CONSULTANTS -->
+    </div><!-- /panel-roadmap -->
+
+
+    <!-- ─── PANEL : CONSULTANTS ─── -->
     <div class="panel" id="panel-people">
       <div class="pph">
         <div class="pp-title">Consultants AVA2i</div>
@@ -397,19 +185,32 @@ body { font-family: var(--ff); background: var(--bg); color: var(--g900); font-s
           <div class="kpi"><div class="kpi-n">7</div><div class="kpi-l">Domaines</div></div>
         </div>
         <div class="pp-filt">
-          <input class="sf-input" style="width:200px;margin:0" id="ps" placeholder="Rechercher…" oninput="filterP()">
-          <select class="sf-select" style="width:130px;margin:0" id="pd" onchange="filterP()"><option value="">Domaine</option><option>Data</option><option>Dev</option><option>Infra</option><option>Sec</option><option>Strat</option><option>Exp</option><option>Archi</option></select>
-          <select class="sf-select" style="width:120px;margin:0" id="pc" onchange="filterP()"><option value="">Contrat</option><option>CDI</option><option>Freelance</option></select>
-          <select class="sf-select" style="width:120px;margin:0" id="pn" onchange="filterP()"><option value="">Niveau</option><option>Expert</option><option>Confirme</option></select>
+          <input  class="sf-input"  style="width:200px;margin:0" id="ps" placeholder="Rechercher…" oninput="filterP()">
+          <select class="sf-select" style="width:130px;margin:0" id="pd" onchange="filterP()">
+            <option value="">Domaine</option>
+            <option>Data</option><option>Dev</option><option>Infra</option>
+            <option>Sec</option><option>Strat</option><option>Exp</option><option>Archi</option>
+          </select>
+          <select class="sf-select" style="width:120px;margin:0" id="pc" onchange="filterP()">
+            <option value="">Contrat</option>
+            <option>CDI</option><option>Freelance</option>
+          </select>
+          <select class="sf-select" style="width:120px;margin:0" id="pn" onchange="filterP()">
+            <option value="">Niveau</option>
+            <option>Expert</option><option>Confirme</option>
+          </select>
         </div>
       </div>
       <div class="pp-grid" id="pp-grid"></div>
-    </div>
+    </div><!-- /panel-people -->
 
   </main>
-</div>
+</div><!-- /wrap -->
 
-<!-- TASK MODAL -->
+
+<!-- ══════════════════════════════════════════════════
+     MODAL : TÂCHE (création / édition)
+══════════════════════════════════════════════════ -->
 <div class="overlay" id="taskOv" onclick="ovc(event,'taskOv')">
   <div class="modal">
     <div class="mh">
@@ -418,29 +219,69 @@ body { font-family: var(--ff); background: var(--bg); color: var(--g900); font-s
     </div>
     <div class="mb">
       <div class="mgrid">
-        <div class="mf"><label>Statut</label><select id="ms"><option value="todo">À faire</option><option value="wip">En cours</option><option value="review">Review</option><option value="done">Terminé</option><option value="block">Bloqué</option></select></div>
-        <div class="mf"><label>Priorité</label><select id="mp"><option value="basse">Basse</option><option value="moyenne">Moyenne</option><option value="haute">Haute</option><option value="critique">Critique</option></select></div>
-        <div class="mf"><label>Type</label><select id="mty"><option>Structure</option><option>Recrutement</option><option>Formation</option><option>Produit</option><option>Gouvernance</option><option>Client</option></select></div>
-        <div class="mf"><label>Centre</label><select id="mc"><option value="Transversal">Transversal</option><option value="C01">C01 — Data &amp; IA</option><option value="C02">C02 — IA Gen</option><option value="C03">C03 — Conseil</option></select></div>
+        <div class="mf">
+          <label>Statut</label>
+          <select id="ms">
+            <option value="todo">À faire</option>
+            <option value="wip">En cours</option>
+            <option value="review">Review</option>
+            <option value="done">Terminé</option>
+            <option value="block">Bloqué</option>
+          </select>
+        </div>
+        <div class="mf">
+          <label>Priorité</label>
+          <select id="mp">
+            <option value="basse">Basse</option>
+            <option value="moyenne">Moyenne</option>
+            <option value="haute">Haute</option>
+            <option value="critique">Critique</option>
+          </select>
+        </div>
+        <div class="mf">
+          <label>Type</label>
+          <select id="mty">
+            <option>Structure</option><option>Recrutement</option><option>Formation</option>
+            <option>Produit</option><option>Gouvernance</option><option>Client</option>
+          </select>
+        </div>
+        <div class="mf">
+          <label>Centre</label>
+          <select id="mc">
+            <option value="Transversal">Transversal</option>
+            <option value="C01">C01 — Data &amp; IA</option>
+            <option value="C02">C02 — IA Gen</option>
+            <option value="C03">C03 — Conseil</option>
+          </select>
+        </div>
         <div class="mf"><label>Owner</label><input id="mo" placeholder="Responsable…"></div>
         <div class="mf"><label>Deadline</label><input type="date" id="mdl"></div>
         <div class="mf"><label>Date début</label><input type="date" id="mst"></div>
         <div class="mf"><label>Date fin prévue</label><input type="date" id="men"></div>
-        <div class="mf full"><label>Description</label><textarea id="mde" placeholder="Contexte, objectif, critères de succès…"></textarea></div>
-        <div class="mf full"><label>Notes / Blocages</label><textarea id="mno" placeholder="Blocages, décisions, commentaires…" style="min-height:50px"></textarea></div>
+        <div class="mf full">
+          <label>Description</label>
+          <textarea id="mde" placeholder="Contexte, objectif, critères de succès…"></textarea>
+        </div>
+        <div class="mf full">
+          <label>Notes / Blocages</label>
+          <textarea id="mno" placeholder="Blocages, décisions, commentaires…" style="min-height:50px"></textarea>
+        </div>
       </div>
     </div>
     <div class="mfoot">
       <button class="btn-del" id="mbdel" onclick="delTask()" style="display:none">Supprimer</button>
       <div class="mactions">
         <button class="btn btn-ghost" onclick="closeOv('taskOv')">Annuler</button>
-        <button class="btn btn-blue" onclick="saveTask()">Enregistrer</button>
+        <button class="btn btn-blue"  onclick="saveTask()">Enregistrer</button>
       </div>
     </div>
   </div>
 </div>
 
-<!-- SETUP MODAL -->
+
+<!-- ══════════════════════════════════════════════════
+     MODAL : CONFIGURATION FIREBASE
+══════════════════════════════════════════════════ -->
 <div class="overlay" id="setupOv" onclick="ovc(event,'setupOv')">
   <div class="modal" style="width:490px">
     <div class="mh">
@@ -453,347 +294,38 @@ body { font-family: var(--ff); background: var(--bg); color: var(--g900); font-s
     <div class="mb">
       <div class="setup-step">
         <div class="ss-title">Étape 1 — Créer le projet Firebase</div>
-        <ol><li>Va sur <strong>console.firebase.google.com</strong></li><li>Créer un projet → nommer <code>ava2i-roadmap</code></li><li>Realtime Database → Créer → Mode test</li><li>Paramètres → App Web → copier le <code>firebaseConfig</code></li></ol>
+        <ol>
+          <li>Va sur <strong>console.firebase.google.com</strong></li>
+          <li>Créer un projet → nommer <code>ava2i-roadmap</code></li>
+          <li>Realtime Database → Créer → Mode test</li>
+          <li>Paramètres → App Web → copier le <code>firebaseConfig</code></li>
+        </ol>
       </div>
       <div class="setup-step">
-        <div class="ss-title">Étape 2 — Coller dans le fichier HTML</div>
-        <ol><li>Ouvrir <code>index.html</code> dans un éditeur</li><li>Chercher <code>FIREBASE_CONFIG</code></li><li>Remplacer les <code>VOTRE_...</code> par tes vraies valeurs</li><li>Sauvegarder et uploader sur GitHub Pages</li></ol>
+        <div class="ss-title">Étape 2 — Coller dans le fichier app.js</div>
+        <ol>
+          <li>Ouvrir <code>app.js</code> dans un éditeur</li>
+          <li>Chercher <code>FIREBASE_CONFIG</code> en haut du fichier</li>
+          <li>Remplacer les <code>VOTRE_...</code> par tes vraies valeurs</li>
+          <li>Sauvegarder et uploader sur GitHub Pages</li>
+        </ol>
       </div>
-      <div class="info-box">💡 <strong>Gratuit</strong> — Firebase offre 1 Go de stockage. Chaque modification est visible immédiatement pour tous les collaborateurs.</div>
+      <div class="info-box">
+        💡 <strong>Gratuit</strong> — Firebase offre 1 Go de stockage.
+        Chaque modification est visible immédiatement pour tous les collaborateurs.
+      </div>
     </div>
     <div class="mfoot">
       <div class="mactions">
         <button class="btn btn-ghost" onclick="closeOv('setupOv')">Fermer</button>
-        <button class="btn btn-blue" onclick="window.open('https://console.firebase.google.com','_blank');closeOv('setupOv')">Ouvrir Firebase →</button>
+        <button class="btn btn-blue"  onclick="window.open('https://console.firebase.google.com','_blank');closeOv('setupOv')">Ouvrir Firebase →</button>
       </div>
     </div>
   </div>
 </div>
 
-<script>
-// ── FIREBASE CONFIG ──
-const FIREBASE_CONFIG = {
-  apiKey:            "VOTRE_API_KEY",
-  authDomain:        "VOTRE_PROJECT.firebaseapp.com",
-  databaseURL:       "https://VOTRE_PROJECT-default-rtdb.europe-west1.firebasedatabase.app",
-  projectId:         "VOTRE_PROJECT",
-  storageBucket:     "VOTRE_PROJECT.appspot.com",
-  messagingSenderId: "VOTRE_SENDER_ID",
-  appId:             "VOTRE_APP_ID"
-};
 
-// ── STATE ──
-let tasks = {}, editId = null, curView = 'list', _drag = null;
-let _db = null, _ref = null;
-const F = { status: new Set(), priority: new Set(), type: new Set(), centre: new Set() };
-
-const TC = { Structure:'#2563eb', Recrutement:'#7c3aed', Formation:'#b45309', Produit:'#16a34a', Gouvernance:'#0891b2', Client:'#dc2626' };
-const PL = { basse:'Basse', moyenne:'Moyenne', haute:'Haute', critique:'Critique' };
-const SN = { todo:'À faire', wip:'En cours', review:'Review', done:'Terminé', block:'Bloqué' };
-const DC = { Data:'#0891b2', Dev:'#7c3aed', Infra:'#b45309', Sec:'#dc2626', Strat:'#16a34a', Exp:'#4f46e5', Archi:'#db2777' };
-
-// ── FIREBASE ──
-function setSS(s) {
-  const c={connecting:'#f59e0b',connected:'#16a34a',offline:'#9ca3af',saving:'#2563eb'};
-  const l={connecting:'Connexion…',connected:'Sync actif',offline:'Local',saving:'Sauvegarde…'};
-  document.getElementById('sdot').style.background=c[s]||'#9ca3af';
-  document.getElementById('stxt').textContent=l[s]||'Local';
-}
-function initFB() {
-  try {
-    const {initializeApp,getDatabase,ref,onValue}=window._fb;
-    _db=getDatabase(initializeApp(FIREBASE_CONFIG));
-    _ref=ref(_db,'ava2i/tasks');
-    setSS('connecting');
-    onValue(_ref,snap=>{tasks=snap.val()||{};render();setSS('connected');},()=>setSS('offline'));
-  } catch(e){setSS('offline');}
-}
-function save(t) {
-  if(_db){setSS('saving');const{ref,set}=window._fb;set(ref(_db,'ava2i/tasks/'+t.id),t).then(()=>setSS('connected')).catch(()=>setSS('offline'));}
-  tasks[t.id]=t;lsSave();
-}
-function del(id) {
-  if(_db){const{ref,remove}=window._fb;remove(ref(_db,'ava2i/tasks/'+id));}
-  delete tasks[id];lsSave();
-}
-function lsSave(){try{localStorage.setItem('ava2i_rm',JSON.stringify(tasks));}catch(e){}}
-function lsLoad(){try{const d=localStorage.getItem('ava2i_rm');if(d)tasks=JSON.parse(d);}catch(e){}}
-
-window.addEventListener('load',()=>{
-  lsLoad();
-  setTimeout(()=>{if(window._fb)initFB();else setSS('offline');},500);
-  renderPeople(); render();
-});
-
-// ── MODAL ──
-function openNew() {
-  editId=null;
-  ['mt','mo','mdl','mst','men','mde','mno'].forEach(id=>document.getElementById(id).value='');
-  document.getElementById('ms').value='todo';
-  document.getElementById('mp').value='moyenne';
-  document.getElementById('mty').value='Structure';
-  document.getElementById('mc').value='Transversal';
-  document.getElementById('mbdel').style.display='none';
-  document.getElementById('taskOv').classList.add('on');
-  setTimeout(()=>document.getElementById('mt').focus(),150);
-}
-function openTask(id) {
-  const t=tasks[id];if(!t)return;
-  editId=id;
-  document.getElementById('mt').value=t.title||'';
-  document.getElementById('ms').value=t.status||'todo';
-  document.getElementById('mp').value=t.priority||'moyenne';
-  document.getElementById('mty').value=t.type||'Structure';
-  document.getElementById('mc').value=t.centre||'Transversal';
-  document.getElementById('mo').value=t.owner||'';
-  document.getElementById('mdl').value=t.deadline||'';
-  document.getElementById('mst').value=t.start||'';
-  document.getElementById('men').value=t.end||'';
-  document.getElementById('mde').value=t.desc||'';
-  document.getElementById('mno').value=t.notes||'';
-  document.getElementById('mbdel').style.display='';
-  document.getElementById('taskOv').classList.add('on');
-}
-function saveTask() {
-  const title=document.getElementById('mt').value.trim();if(!title)return;
-  const id=editId||'t'+Date.now();
-  save({id,title,
-    status:   document.getElementById('ms').value,
-    priority: document.getElementById('mp').value,
-    type:     document.getElementById('mty').value,
-    centre:   document.getElementById('mc').value,
-    owner:    document.getElementById('mo').value.trim(),
-    deadline: document.getElementById('mdl').value,
-    start:    document.getElementById('mst').value,
-    end:      document.getElementById('men').value,
-    desc:     document.getElementById('mde').value.trim(),
-    notes:    document.getElementById('mno').value.trim(),
-    createdAt:tasks[id]?.createdAt||Date.now(),updatedAt:Date.now()
-  });
-  closeOv('taskOv');render();
-}
-function delTask(){if(!editId||!confirm('Supprimer cette tâche ?'))return;del(editId);closeOv('taskOv');render();}
-function closeOv(id){document.getElementById(id).classList.remove('on');}
-function ovc(e,id){if(e.target.id===id)closeOv(id);}
-function openSetup(){document.getElementById('setupOv').classList.add('on');}
-document.addEventListener('keydown',e=>{if(e.key==='Escape'){closeOv('taskOv');closeOv('setupOv');}});
-
-// ── FILTERS ──
-function tog(el){
-  el.classList.toggle('on');
-  const{g,v}=el.dataset;
-  el.classList.contains('on')?F[g].add(v):F[g].delete(v);render();
-}
-function clearF(){
-  document.getElementById('fs').value='';
-  document.getElementById('fo').value='';
-  document.getElementById('fd').value='';
-  ['status','priority','type','centre'].forEach(g=>F[g].clear());
-  document.querySelectorAll('.chip.on').forEach(c=>c.classList.remove('on'));
-  render();
-}
-function matches(t){
-  const s=(document.getElementById('fs').value||'').toLowerCase();
-  const o=(document.getElementById('fo').value||'').toLowerCase();
-  const dl=document.getElementById('fd').value;
-  if(s&&!(t.title||'').toLowerCase().includes(s)&&!(t.owner||'').toLowerCase().includes(s))return false;
-  if(o&&!(t.owner||'').toLowerCase().includes(o))return false;
-  if(F.status.size&&!F.status.has(t.status))return false;
-  if(F.priority.size&&!F.priority.has(t.priority))return false;
-  if(F.type.size&&!F.type.has(t.type))return false;
-  if(F.centre.size&&!F.centre.has(t.centre))return false;
-  if(dl&&t.deadline){
-    const diff=Math.ceil((new Date(t.deadline)-new Date())/864e5);
-    if(dl==='overdue'&&diff>=0)return false;
-    if(dl==='week'&&(diff<0||diff>7))return false;
-    if(dl==='month'&&(diff<0||diff>30))return false;
-    if(dl==='quarter'&&(diff<0||diff>90))return false;
-  }
-  return true;
-}
-function vis(){return Object.values(tasks).filter(matches);}
-
-// ── RENDER ──
-function render(){
-  const vt=vis();
-  document.getElementById('fcount').innerHTML=`<strong>${vt.length}</strong> tâche${vt.length!==1?'s':''} affichée${vt.length!==1?'s':''}`;
-  const tot=Object.keys(tasks).length;
-  document.getElementById('ph-sub').textContent=`${tot} tâche${tot!==1?'s':''} · 2026`;
-  if(curView==='list')renderList();
-  else if(curView==='kanban')renderKanban();
-  else renderTimeline();
-}
-
-// LIST
-function renderList(){
-  const vt=vis().sort((a,b)=>{const p={critique:0,haute:1,moyenne:2,basse:3};return(p[a.priority]||2)-(p[b.priority]||2);});
-  const body=document.getElementById('list-body');
-  const empty=document.getElementById('list-empty');
-  if(!vt.length){body.innerHTML='';empty.style.display='';return;}
-  empty.style.display='none';
-  const G={wip:[],todo:[],review:[],block:[],done:[]};
-  vt.forEach(t=>(G[t.status]||G.todo).push(t));
-  const order=['wip','todo','review','block','done'];
-  const GN={wip:'En cours',todo:'À faire',review:'Review',block:'Bloqué',done:'Terminé'};
-  const GC={wip:'var(--amber)',todo:'var(--g500)',review:'var(--purple)',block:'var(--red)',done:'var(--green)'};
-  body.innerHTML=order.filter(g=>G[g].length).map(g=>`
-    <div class="lv-group">
-      <div class="lv-gh" onclick="togGrp(this)">
-        <span class="lv-arr open" style="color:${GC[g]}">▶</span>
-        <span class="lv-gname" style="color:${GC[g]}">${GN[g]}</span>
-        <span class="lv-gcount">${G[g].length}</span>
-      </div>
-      <div>
-        <div class="tbl">
-          <div class="tbl-head"><span></span><span>Titre</span><span>Type</span><span>Priorité</span><span>Centre</span><span>Owner</span><span>Deadline</span><span></span></div>
-          ${G[g].map(t=>trow(t)).join('')}
-        </div>
-      </div>
-    </div>`).join('');
-}
-function togGrp(h){
-  const arr=h.querySelector('.lv-arr');
-  arr.classList.toggle('open');
-  h.nextElementSibling.style.display=arr.classList.contains('open')?'':'none';
-}
-function trow(t){
-  const tc=TC[t.type]||'var(--g400)';
-  const ow=t.owner?`<span class="owner"><span class="oav" style="background:${sc(t.owner)}">${ini(t.owner)}</span>${x(t.owner)}</span>`:'<span style="color:var(--g300)">—</span>';
-  return `<div class="trow" onclick="openTask('${t.id}')">
-    <div><span class="tdot" style="background:${tc}"></span></div>
-    <div><div class="cell-title">${x(t.title)}</div>${t.desc?`<div class="cell-sub">${x(t.desc)}</div>`:''}</div>
-    <div><span class="type-pill" style="background:${tc}15;color:${tc}">${t.type||'—'}</span></div>
-    <div><span class="badge bp-${t.priority||'moyenne'}">${PL[t.priority]||'—'}</span></div>
-    <div style="font-size:12px;color:var(--g400)">${t.centre||'—'}</div>
-    <div>${ow}</div>
-    <div>${dltag(t.deadline)}</div>
-    <div><button class="row-btn" onclick="event.stopPropagation();openTask('${t.id}')">···</button></div>
-  </div>`;
-}
-function dltag(dl){
-  if(!dl)return'<span style="color:var(--g300)">—</span>';
-  const d=new Date(dl),diff=Math.ceil((d-new Date())/864e5);
-  const cls=diff<0?'late':diff<=7?'soon':'';
-  return`<span class="dl ${cls}">${d.toLocaleDateString('fr-FR',{day:'2-digit',month:'short'})}</span>`;
-}
-
-// KANBAN
-function renderKanban(){
-  ['todo','wip','review','block','done'].forEach(s=>{
-    const items=vis().filter(t=>t.status===s);
-    document.getElementById('kb-'+s).innerHTML=items.map(t=>kcard(t)).join('');
-    document.getElementById('kn-'+s).textContent=items.length;
-  });
-}
-function kcard(t){
-  const tc=TC[t.type]||'var(--g400)';
-  return`<div class="kcard" draggable="true" data-id="${t.id}"
-    ondragstart="kdstart(event,'${t.id}')" ondragend="kdend()"
-    onclick="openTask('${t.id}')">
-    <div class="kcard-title">${x(t.title)}</div>
-    <div style="font-size:11px;color:${tc};font-weight:500;margin-bottom:8px">${t.type||''}</div>
-    <div class="kcard-footer">
-      <span class="badge bp-${t.priority||'moyenne'}">${PL[t.priority]||''}</span>
-      ${t.owner?`<span class="owner"><span class="oav" style="background:${sc(t.owner)};width:16px;height:16px;font-size:9px">${ini(t.owner)}</span>${x(t.owner)}</span>`:''}
-    </div>
-    ${t.deadline?`<div style="margin-top:8px;padding-top:8px;border-top:1px solid var(--g100)">${dltag(t.deadline)}</div>`:''}
-  </div>`;
-}
-function kdstart(e,id){_drag=id;e.currentTarget.classList.add('dragging');}
-function kdend(){_drag=null;document.querySelectorAll('.kcard.dragging').forEach(c=>c.classList.remove('dragging'));}
-function kdo(e,s){e.preventDefault();document.getElementById('kb-'+s).classList.add('over');}
-function kdl(s){document.getElementById('kb-'+s).classList.remove('over');}
-function kdd(e,s){e.preventDefault();kdl(s);if(!_drag)return;const t=tasks[_drag];if(!t)return;t.status=s;save(t);render();}
-
-// TIMELINE
-function renderTimeline(){
-  const root=document.getElementById('tl-root'),empty=document.getElementById('tl-empty');
-  const vt=vis().filter(t=>t.start&&t.end);
-  if(!vt.length){root.innerHTML='';root.style.display='none';empty.style.display='';return;}
-  root.style.display='';empty.style.display='none';
-  let mn=new Date(Math.min(...vt.map(t=>new Date(t.start))));
-  let mx=new Date(Math.max(...vt.map(t=>new Date(t.end))));
-  mn=new Date(mn.getFullYear(),mn.getMonth(),1);
-  mx=new Date(mx.getFullYear(),mx.getMonth()+2,0);
-  const tot=(mx-mn)/864e5;
-  const pct=d=>((new Date(d)-mn)/864e5/tot*100).toFixed(2);
-  const months=[];let cur=new Date(mn);
-  while(cur<=mx){months.push(new Date(cur));cur=new Date(cur.getFullYear(),cur.getMonth()+1,1);}
-  const centres=['Transversal','C01','C02','C03'];
-  const lanes=centres.map(c=>({c,tasks:vt.filter(t=>t.centre===c)})).filter(l=>l.tasks.length);
-  const tp=pct(new Date());
-  root.innerHTML=`<div class="tl-box">
-    <div class="tl-hrow">
-      <div class="tl-llabel-h">Centre</div>
-      <div class="tl-months">${months.map(m=>`<div class="tl-mo${m.getMonth()===new Date().getMonth()&&m.getFullYear()===new Date().getFullYear()?' cur':''}">${m.toLocaleDateString('fr-FR',{month:'short',year:'2-digit'})}</div>`).join('')}</div>
-    </div>
-    ${lanes.map(lane=>`<div class="tl-row">
-      <div class="tl-llabel">${lane.c}</div>
-      <div class="tl-area" style="min-height:${Math.max(48,lane.tasks.length*36+20)}px">
-        ${lane.tasks.map((t,i)=>{const tc=TC[t.type]||'#2563eb';const l=pct(t.start),w=Math.max(Number(pct(t.end))-Number(l),.5);return`<div class="tl-bar" style="left:${l}%;width:${w}%;background:${tc}15;border:1px solid ${tc}35;color:${tc};top:${10+i*34}px" onclick="openTask('${t.id}')">${x(t.title)}</div>`}).join('')}
-        ${tp>0&&tp<100?`<div class="tl-now" style="left:${tp}%"></div>`:''}
-      </div>
-    </div>`).join('')}
-  </div>`;
-}
-
-// VIEW/TAB SWITCH
-function switchView(v){
-  curView=v;
-  ['list','kanban','timeline'].forEach(n=>{
-    document.getElementById('v-'+n).style.display=n===v?(n==='kanban'?'flex':'block'):'none';
-    document.getElementById('vb-'+n).classList.toggle('on',n===v);
-  });
-  render();
-}
-function switchTab(t,btn){
-  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('on'));
-  document.querySelectorAll('.ntab').forEach(b=>b.classList.remove('on'));
-  document.getElementById('panel-'+t).classList.add('on');
-  btn.classList.add('on');
-  document.getElementById('sidebar').style.display=t==='roadmap'?'':'none';
-}
-
-// ── CONSULTANTS ──
-const CONSULTANTS=[{"nom":"Fatine STIRIBA","contrat":"CDI","niveau":"Expert","domaine":"Data","titre":"BI"},{"nom":"Izem TAOUFIK","contrat":"Freelance","niveau":"Expert","domaine":"Data","titre":"Data engineer"},{"nom":"Cheikh MBOW","contrat":"Freelance","niveau":"Expert","domaine":"Data","titre":"Business Analyst"},{"nom":"Mohamed BOUJEH","contrat":"Freelance","niveau":"Expert","domaine":"Infra","titre":"Cloud Engineer"},{"nom":"Chaimae BENJABAR","contrat":"CDI","niveau":"Confirme","domaine":"Strat","titre":"Business Analyst"},{"nom":"Laila TAFOUGALTI","contrat":"CDI","niveau":"Confirme","domaine":"Strat","titre":"Business Analyst"},{"nom":"Georges CASTRO","contrat":"Freelance","niveau":"Expert","domaine":"Data","titre":"BI"},{"nom":"Anas NAHRI","contrat":"Freelance","niveau":"Expert","domaine":"Data","titre":"Business Analyst"},{"nom":"Houcine KHEROUA","contrat":"Freelance","niveau":"Expert","domaine":"Strat","titre":"Business Analyst"},{"nom":"Dieng CHEIKH","contrat":"Freelance","niveau":"Expert","domaine":"Infra","titre":"Cloud Architect"},{"nom":"Youssef LAFSSAHI","contrat":"Freelance","niveau":"Expert","domaine":"Infra","titre":"Cloud Engineer"},{"nom":"Anass YAHYAOUI","contrat":"Freelance","niveau":"Confirme","domaine":"Strat","titre":"Business Analyst"},{"nom":"Inès HABBOU","contrat":"Freelance","niveau":"Confirme","domaine":"Strat","titre":"Business Analyst"},{"nom":"Abdellazize AMRANI","contrat":"Freelance","niveau":"Expert","domaine":"Strat","titre":"Business Analyst"},{"nom":"Sabrina AGADIR","contrat":"Freelance","niveau":"Expert","domaine":"Sec","titre":"Data Security Engineer"},{"nom":"Mohamed Amine BEN SLIMEN","contrat":"CDI","niveau":"Expert","domaine":"Strat","titre":"Business Analyst"},{"nom":"Thomas EM","contrat":"Freelance","niveau":"","domaine":"Strat","titre":"Business Analyst"},{"nom":"Hamza CHAOUKI","contrat":"CDI","niveau":"Confirme","domaine":"Strat","titre":"Business Analyst"},{"nom":"Mourad AMACH","contrat":"Freelance","niveau":"Expert","domaine":"Strat","titre":"Business Analyst"},{"nom":"Bruno BASTARD","contrat":"Freelance","niveau":"Expert","domaine":"Infra","titre":"Cloud Technique"},{"nom":"Hippolyte TCHAMOKOUEN","contrat":"Freelance","niveau":"Expert","domaine":"Exp","titre":"DBA"},{"nom":"Haytham BAAKI","contrat":"CDI","niveau":"Expert","domaine":"Strat","titre":"Business Analyst"},{"nom":"Oumaima HAFIENE","contrat":"CDI","niveau":"Expert","domaine":"Exp","titre":"Support Applicatif"},{"nom":"Sefako GUENOU","contrat":"CDI","niveau":"Expert","domaine":"Exp","titre":"Support Technico-Fonctionnel"},{"nom":"Najoua HAYA","contrat":"CDI","niveau":"Confirme","domaine":"Sec","titre":"IT Risk"},{"nom":"Nouha BELKHATIR","contrat":"Freelance","niveau":"Confirme","domaine":"Exp","titre":"BA Cash Management"},{"nom":"Amine EL HIJAZI","contrat":"Freelance","niveau":"Confirme","domaine":"Sec","titre":"Ingénieur Réseaux et Sécurité"},{"nom":"Caglar SEN","contrat":"Freelance","niveau":"Confirme","domaine":"Strat","titre":"Product Manager"},{"nom":"Meriem SELLAMI","contrat":"Freelance","niveau":"","domaine":"Sec","titre":"IT Risk"},{"nom":"Wassim JABEUR","contrat":"CDI","niveau":"Expert","domaine":"Infra","titre":"Chef de Projet Infra"},{"nom":"Ahmed AMRI","contrat":"Freelance","niveau":"Confirme","domaine":"Exp","titre":"Expert Devops"},{"nom":"Alassane M. MAIGA","contrat":"CDI","niveau":"Expert","domaine":"Exp","titre":"Ingénieur de Production"},{"nom":"Ayoub CHOUHAIBI","contrat":"Freelance","niveau":"Expert","domaine":"Exp","titre":"Ingénieur de Production"},{"nom":"Zeiden ELKOUCHE","contrat":"Freelance","niveau":"Expert","domaine":"Dev","titre":"Expert Sharepoint"},{"nom":"Ahmed HLABBA","contrat":"Freelance","niveau":"Expert","domaine":"Dev","titre":"Expert Sharepoint"},{"nom":"Mohamed BELALIA","contrat":"Freelance","niveau":"Expert","domaine":"Infra","titre":"Ingénieur Poste de Travail"},{"nom":"Khaled BEHI","contrat":"Freelance","niveau":"Expert","domaine":"Sec","titre":"IT Risk"},{"nom":"Moez CHERIF","contrat":"Freelance","niveau":"Expert","domaine":"Exp","titre":"Ingénieur de Production"},{"nom":"Mohamed CHEBBI","contrat":"Freelance","niveau":"Expert","domaine":"Dev","titre":"Lead Java"},{"nom":"Manel LASSOUED","contrat":"CDI","niveau":"Confirme","domaine":"Infra","titre":"Admin Système"},{"nom":"Houda EL HILALI","contrat":"CDI","niveau":"Expert","domaine":"Strat","titre":"Chef de Projet"},{"nom":"Jamal AMERMOUCH","contrat":"CDI","niveau":"Expert","domaine":"Dev","titre":"Analyste Dev Mainframe"},{"nom":"Rachida ADNANE","contrat":"CDI","niveau":"Expert","domaine":"Strat","titre":"Chef de Projet Mainframe"},{"nom":"Lamia LAHRACH","contrat":"Freelance","niveau":"Expert","domaine":"Dev","titre":"Analyste Mainframe"},{"nom":"Rajaa ABOUMAAD","contrat":"CDI","niveau":"Confirme","domaine":"Dev","titre":"Ingénieur Mainframe"},{"nom":"Youness BARA","contrat":"Freelance","niveau":"Expert","domaine":"Dev","titre":"Ingénieur Mainframe"},{"nom":"Armand SAMMET BELL","contrat":"Freelance","niveau":"Expert","domaine":"Exp","titre":"SRE"},{"nom":"Christ-Ephrem ZIDAGO","contrat":"CDI","niveau":"Confirme","domaine":"Exp","titre":"Ingénieur de Production"},{"nom":"Eric ASSIONGBON","contrat":"Freelance","niveau":"Expert","domaine":"Exp","titre":"Ingénieur de Production"},{"nom":"Ivan SIESS","contrat":"Freelance","niveau":"Expert","domaine":"Archi","titre":"Architecte Messagerie Exchange"},{"nom":"Serge NANA","contrat":"CDI","niveau":"Confirme","domaine":"Strat","titre":"Chef de Projet SI"},{"nom":"Zineb ZOLI","contrat":"CDI","niveau":"Confirme","domaine":"Exp","titre":"Ingénieur de Production"},{"nom":"Anas FAROUKI","contrat":"Freelance","niveau":"Expert","domaine":"Infra","titre":"Ingénierie N3 Windows DevOPS"},{"nom":"Faiza CHELQI","contrat":"Freelance","niveau":"Expert","domaine":"Exp","titre":"Consultant Extream"},{"nom":"Ayoub KHALDI","contrat":"Freelance","niveau":"Expert","domaine":"Sec","titre":"IT Risk"},{"nom":"MOUSTAPHA AZZAOUI","contrat":"Freelance","niveau":"Confirme","domaine":"Infra","titre":"Technicien Data Center"},{"nom":"NAOUFAL IDRISSI KHAMLICHI","contrat":"Freelance","niveau":"Expert","domaine":"Sec","titre":"IT Risk"},{"nom":"Yanis ALIA","contrat":"CDI","niveau":"Confirme","domaine":"Archi","titre":"Architecte Système"},{"nom":"Leila BOKRETA","contrat":"Freelance","niveau":"Expert","domaine":"Strat","titre":"PMO Cloud"},{"nom":"Ayoub AFARID","contrat":"Freelance","niveau":"Expert","domaine":"Dev","titre":"Dev Angular Java"},{"nom":"Youssi ADOUHANE","contrat":"Freelance","niveau":"Expert","domaine":"Strat","titre":"Chef de Projet MOA"},{"nom":"Ramzi MOSRATI","contrat":"Freelance","niveau":"Expert","domaine":"Dev","titre":"Dev Angular Java"},{"nom":"Ahmed ATALLAH","contrat":"Freelance","niveau":"Expert","domaine":"Strat","titre":"Chef de Projet Comptabilité"},{"nom":"Ghizlane ELGADI","contrat":"CDI","niveau":"Confirme","domaine":"Exp","titre":"Ingénieur de Production"},{"nom":"Mamadou LAMARANA SOW","contrat":"Freelance","niveau":"Expert","domaine":"Exp","titre":"Ingénieur de Production"},{"nom":"Yousra CHERGUIF","contrat":"CDI","niveau":"Confirme","domaine":"Exp","titre":"Ingénieur Analyste Exploitation"},{"nom":"Abdelwahed EL QASRY","contrat":"Freelance","niveau":"Expert","domaine":"Dev","titre":"Dev Angular Java"},{"nom":"Amine BECHRAOUI","contrat":"Freelance","niveau":"Expert","domaine":"Dev","titre":"Dev Java"},{"nom":"Hamza SAMID","contrat":"Freelance","niveau":"Confirme","domaine":"Dev","titre":"Dev Java"},{"nom":"Mehdi KARZOUZ","contrat":"Freelance","niveau":"Expert","domaine":"Strat","titre":"Directeur Projet Cybersécurité"},{"nom":"Zouhair HAJJI","contrat":"Freelance","niveau":"Expert","domaine":"Dev","titre":"Dev Java"},{"nom":"Mohammed KARTOBI","contrat":"Freelance","niveau":"Expert","domaine":"Dev","titre":"Dev Mainframe"},{"nom":"Afef BARKA","contrat":"CDI","niveau":"Expert","domaine":"Dev","titre":"Experte Frontend Angular JS"},{"nom":"Mounim ELBIYAALI","contrat":"Freelance","niveau":"Expert","domaine":"Dev","titre":"MOE Java Angular"},{"nom":"Yassine OUACHHAL","contrat":"Freelance","niveau":"Expert","domaine":"Dev","titre":"Dev Java Angular"},{"nom":"Ayoub RAOUAFI","contrat":"Freelance","niveau":"Expert","domaine":"Sec","titre":"Système et Sécurité"},{"nom":"Nicolas STOPHE","contrat":"Freelance","niveau":"Expert","domaine":"Dev","titre":"Dev WPF"},{"nom":"FADEL ADMANE","contrat":"Freelance","niveau":"Expert","domaine":"Sec","titre":"Ingénieur Cybersécurité Industriel"},{"nom":"Achraf MAHFOUDH","contrat":"CDI","niveau":"Confirme","domaine":"Dev","titre":"Dev Java Angular"},{"nom":"Illiesse CHAMSI","contrat":"Freelance","niveau":"Confirme","domaine":"Strat","titre":"Support Delivery CRM"},{"nom":"Nouredine GHAZLI","contrat":"Freelance","niveau":"Expert","domaine":"Dev","titre":"Dev Java"},{"nom":"Aymane HMIDANI","contrat":"Freelance","niveau":"Expert","domaine":"Dev","titre":"Consultant Cobol"},{"nom":"Noureddine BENHAMOU","contrat":"Freelance","niveau":"Expert","domaine":"Dev","titre":"Dev Mainframe"},{"nom":"Asmaa ESSAQRI","contrat":"Freelance","niveau":"Confirme","domaine":"Infra","titre":"Incident Manager"},{"nom":"Bassory OUATTARA","contrat":"CDI","niveau":"Expert","domaine":"Exp","titre":"Ingénieur Production DevOps"},{"nom":"Glody TIRI MINDI","contrat":"Freelance","niveau":"Confirme","domaine":"Exp","titre":"Ingénieur de Production"},{"nom":"Hanae EL BADOURI","contrat":"Freelance","niveau":"Confirme","domaine":"Sec","titre":"IT Risk"},{"nom":"Karima SHISSAH","contrat":"CDI","niveau":"Confirme","domaine":"Exp","titre":"Ingénieur de Production"},{"nom":"Soufiyan AKAABOUB","contrat":"CDI","niveau":"Confirme","domaine":"Exp","titre":"Ingénieur Devops"},{"nom":"Clinton Lourdu THOMAS","contrat":"CDI","niveau":"Expert","domaine":"Infra","titre":"Admin Control M"},{"nom":"Aboubakr SEBAI","contrat":"CDI","niveau":"Confirme","domaine":"Exp","titre":"Ingénieur Devops"},{"nom":"Najeh HATTAB","contrat":"CDI","niveau":"Confirme","domaine":"Infra","titre":"Ingénieur Système et Virtualisation"},{"nom":"Adil BRITI ELALAOUI","contrat":"CDI","niveau":"Expert","domaine":"Sec","titre":"Chef de Projet Réseau et Cyber"},{"nom":"Soufiane LAMRANI","contrat":"Freelance","niveau":"Confirme","domaine":"Sec","titre":"Ingénieur Cybersécurité"},{"nom":"Samia BOULIL","contrat":"CDI","niveau":"Expert","domaine":"Sec","titre":"Ingénieur IAM"},{"nom":"Thiziri BERKOUKI","contrat":"Freelance","niveau":"Confirme","domaine":"Exp","titre":"Ingénieur Cloud Devops"},{"nom":"Jalil AGOUMI","contrat":"Freelance","niveau":"Expert","domaine":"Dev","titre":"Dev Python Vue.js"},{"nom":"Najwa SAIDI","contrat":"Freelance","niveau":"Expert","domaine":"Infra","titre":"Chef de Projet Infra"},{"nom":"Abdelilah NIAGUI","contrat":"CDI","niveau":"Expert","domaine":"Sec","titre":"Ingénieur Cybersécurité"},{"nom":"Brice ZIE","contrat":"Freelance","niveau":"Expert","domaine":"Infra","titre":"Admin Microsoft"},{"nom":"Khaled SEGHOUANI","contrat":"Freelance","niveau":"Confirme","domaine":"Dev","titre":"Dev Cloud JS"},{"nom":"Ibrahim DOUCOURE","contrat":"Freelance","niveau":"Expert","domaine":"Infra","titre":"Ingénieur Système Citrix"},{"nom":"Melek HEDDADJI","contrat":"Freelance","niveau":"Expert","domaine":"Exp","titre":"Admin SAP"},{"nom":"Mustapha AMZIL","contrat":"Freelance","niveau":"Expert","domaine":"Exp","titre":"Incident Manager"},{"nom":"Soukaina YAJIB","contrat":"Freelance","niveau":"Expert","domaine":"Exp","titre":"Incident Manager"},{"nom":"Omar BELAFKIH","contrat":"Freelance","niveau":"Expert","domaine":"Exp","titre":"Change Manager"},{"nom":"Joseph DIABY","contrat":"Freelance","niveau":"Expert","domaine":"Strat","titre":"Chef de Projet Workplace"},{"nom":"Sofiane TRABELSI","contrat":"Freelance","niveau":"Expert","domaine":"Exp","titre":"Ingénieur VMWare"},{"nom":"Patrick SCHARGROD","contrat":"Freelance","niveau":"Expert","domaine":"Strat","titre":"Chef de Projet"},{"nom":"Jean Paul QUINETTE","contrat":"Freelance","niveau":"Expert","domaine":"Dev","titre":"UI/UX Designer"},{"nom":"Xavier WERQUIN","contrat":"Freelance","niveau":"Expert","domaine":"Dev","titre":"Dev Angular"},{"nom":"Lucien VA","contrat":"CDI","niveau":"Expert","domaine":"Exp","titre":"Admin Control M"},{"nom":"Kamel LALDJI","contrat":"Freelance","niveau":"Expert","domaine":"Strat","titre":"Chef de Projet"},{"nom":"Michael KLEIN","contrat":"Freelance","niveau":"Expert","domaine":"Strat","titre":"Chef de Projet"},{"nom":"Samy THABIT-ALY-ABDALLA","contrat":"CDI","niveau":"Expert","domaine":"Exp","titre":"Change Manager"},{"nom":"Cyril DELESALLE","contrat":"CDI","niveau":"Expert","domaine":"Strat","titre":"Chef de Projet"},{"nom":"Noel DIRIL","contrat":"Freelance","niveau":"Confirme","domaine":"Dev","titre":"Dev Java IA"},{"nom":"Maxime THOMAS","contrat":"Freelance","niveau":"Expert","domaine":"Infra","titre":"Expert Linux"},{"nom":"KENZA BENLHABIB","contrat":"Freelance","niveau":"Expert","domaine":"Exp","titre":"Consultante Servicenow"},{"nom":"Philippe WAJDENFELD","contrat":"CDI","niveau":"Expert","domaine":"Sec","titre":"Référent Active Directory"},{"nom":"Khalid JAOUani","contrat":"Freelance","niveau":"Expert","domaine":"Strat","titre":"BA Risque Crédit"},{"nom":"Houda GHANNAM","contrat":"Freelance","niveau":"Expert","domaine":"Data","titre":"Dev BI"},{"nom":"Issam BERTH","contrat":"Freelance","niveau":"Expert","domaine":"Infra","titre":"Ingénieur Active Directory"}];
-
-function renderPeople(){
-  document.getElementById('kpi-cdi').textContent=CONSULTANTS.filter(c=>c.contrat==='CDI').length;
-  document.getElementById('kpi-exp').textContent=CONSULTANTS.filter(c=>c.niveau==='Expert').length;
-  filterP();
-}
-function filterP(){
-  const s=(document.getElementById('ps').value||'').toLowerCase();
-  const dom=document.getElementById('pd').value;
-  const ct=document.getElementById('pc').value;
-  const nv=document.getElementById('pn').value;
-  document.getElementById('pp-grid').innerHTML=CONSULTANTS.filter(c=>{
-    if(s&&!(c.nom||'').toLowerCase().includes(s)&&!(c.titre||'').toLowerCase().includes(s))return false;
-    if(dom&&c.domaine!==dom)return false;
-    if(ct&&c.contrat!==ct)return false;
-    if(nv&&c.niveau!==nv)return false;
-    return true;
-  }).map(c=>{
-    const dc=DC[c.domaine]||'#6b7280';
-    const av=c.nom.split(' ').map(w=>w[0]||'').join('').slice(0,2).toUpperCase();
-    return`<div class="pc">
-      <div class="pc-head">
-        <div class="pc-av" style="background:${dc}">${av}</div>
-        <div><div class="pc-name">${x(c.nom)}</div><div class="pc-titre">${x(c.titre)}</div></div>
-      </div>
-      <div class="pc-tags">
-        <span class="pc-tag" style="${c.contrat==='CDI'?'color:var(--green);border-color:#bbf7d0;background:var(--green-bg)':''}">${c.contrat}</span>
-        ${c.niveau?`<span class="pc-tag" style="${c.niveau==='Expert'?'color:var(--blue);border-color:#bfdbfe;background:var(--blue-bg)':''}">${c.niveau}</span>`:''}
-        <span class="pc-tag" style="color:${dc};border-color:${dc}30;background:${dc}0e">${c.domaine}</span>
-      </div>
-    </div>`;
-  }).join('');
-}
-
-// ── UTILS ──
-function x(s){if(!s)return'';return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
-function ini(n){if(!n)return'?';return n.trim().split(/\s+/).map(w=>w[0]||'').join('').slice(0,2).toUpperCase();}
-function sc(s){let h=0;for(let i=0;i<s.length;i++){h=s.charCodeAt(i)+((h<<5)-h);}return`hsl(${Math.abs(h)%360},48%,42%)`;}
-</script>
+<!-- Application -->
+<script src="app.js"></script>
 </body>
 </html>
