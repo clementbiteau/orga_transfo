@@ -127,13 +127,14 @@ window.addEventListener('load', () => {
 
 function openNew() {
   editId = null;
-  ['mt', 'mo', 'mdl', 'mst', 'men', 'mde', 'mno'].forEach(id => {
+  ['mt', 'mo', 'mdl', 'mde'].forEach(id => {
     document.getElementById(id).value = '';
   });
   document.getElementById('ms').value  = 'todo';
   document.getElementById('mp').value  = 'moyenne';
   document.getElementById('mty').value = 'Structure';
   document.getElementById('mc').value  = 'Transversal';
+  document.getElementById('mst').value = new Date().toISOString().slice(0, 10);
   document.getElementById('mbdel').style.display = 'none';
   document.getElementById('taskOv').classList.add('on');
   setTimeout(() => document.getElementById('mt').focus(), 150);
@@ -149,11 +150,9 @@ function openTask(id) {
   document.getElementById('mty').value = t.type     || 'Structure';
   document.getElementById('mc').value  = t.centre   || 'Transversal';
   document.getElementById('mo').value  = t.owner    || '';
-  document.getElementById('mdl').value = t.deadline || '';
   document.getElementById('mst').value = t.start    || '';
-  document.getElementById('men').value = t.end      || '';
+  document.getElementById('mdl').value = t.deadline || '';
   document.getElementById('mde').value = t.desc     || '';
-  document.getElementById('mno').value = t.notes    || '';
   document.getElementById('mbdel').style.display = '';
   document.getElementById('taskOv').classList.add('on');
 }
@@ -169,11 +168,9 @@ function saveTask() {
     type:      document.getElementById('mty').value,
     centre:    document.getElementById('mc').value,
     owner:     document.getElementById('mo').value.trim(),
-    deadline:  document.getElementById('mdl').value,
     start:     document.getElementById('mst').value,
-    end:       document.getElementById('men').value,
+    deadline:  document.getElementById('mdl').value,
     desc:      document.getElementById('mde').value.trim(),
-    notes:     document.getElementById('mno').value.trim(),
     createdAt: tasks[id]?.createdAt || Date.now(),
     updatedAt: Date.now()
   });
