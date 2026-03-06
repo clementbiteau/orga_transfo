@@ -759,15 +759,17 @@ function pie(pct, color, size) {
   const r = (size - 10) / 2, cx = size / 2, cy = size / 2;
   const circ = 2 * Math.PI * r;
   const dash  = ((pct / 100) * circ).toFixed(2);
+  const arc   = pct > 0
+    ? `<circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="${color}" stroke-width="4.5"
+        stroke-linecap="round" stroke-dasharray="${dash} ${circ.toFixed(2)}"
+        transform="rotate(-90 ${cx} ${cy})"/>`
+    : '';
   return `<svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}" style="display:block;flex-shrink:0">
     <circle cx="${cx}" cy="${cy}" r="${r}" fill="${color}" fill-opacity=".09"/>
     <circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="var(--g200)" stroke-width="4.5"/>
-    <circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="${color}" stroke-width="4.5"
-      stroke-linecap="round"
-      stroke-dasharray="${dash} ${circ.toFixed(2)}"
-      transform="rotate(-90 ${cx} ${cy})"/>
+    ${arc}
     <text x="${cx}" y="${cy}" text-anchor="middle" dominant-baseline="central"
-      font-size="11" font-weight="700" fill="${color}"
+      font-size="11" font-weight="700" fill="${pct > 0 ? color : 'var(--g400)'}"
       font-family="-apple-system,BlinkMacSystemFont,'Inter',sans-serif">${pct}%</text>
   </svg>`;
 }
