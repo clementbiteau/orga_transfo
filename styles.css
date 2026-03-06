@@ -159,10 +159,10 @@ body {
 .lv-gcount { font-size: 11px; color: var(--g400); background: var(--g100); padding: 1px 7px; border-radius: 100px; }
 
 .tbl { width: 100%; background: var(--white); border: 1px solid var(--g200); border-radius: var(--r); overflow: hidden; margin-bottom: 4px; border-collapse: collapse; }
-.tbl-head { display: grid; grid-template-columns: 20px 1fr 100px 85px 80px 130px 90px 30px; padding: 8px 12px; border-bottom: 1px solid var(--g100); }
+.tbl-head { display: grid; grid-template-columns: 20px 1fr 120px 85px 130px 90px 30px; padding: 8px 12px; border-bottom: 1px solid var(--g100); }
 .tbl-head span { font-size: 11px; font-weight: 600; color: var(--g400); text-transform: uppercase; letter-spacing: .04em; }
 .trow {
-  display: grid; grid-template-columns: 20px 1fr 100px 85px 80px 130px 90px 30px;
+  display: grid; grid-template-columns: 20px 1fr 120px 85px 130px 90px 30px;
   padding: 9px 12px; border-bottom: 1px solid var(--g100);
   cursor: pointer; align-items: center; transition: background .1s;
 }
@@ -233,7 +233,7 @@ body {
 .tl-box { background: var(--white); border: 1px solid var(--g200); border-radius: var(--r); overflow: hidden; }
 .tl-hrow { display: flex; border-bottom: 1px solid var(--g200); background: var(--bg); }
 .tl-llabel-h {
-  width: 130px; flex-shrink: 0; padding: 9px 12px;
+  width: 180px; flex-shrink: 0; padding: 9px 12px;
   font-size: 11px; font-weight: 600; color: var(--g400);
   text-transform: uppercase; letter-spacing: .04em; border-right: 1px solid var(--g200);
 }
@@ -243,7 +243,7 @@ body {
 .tl-row { display: flex; border-bottom: 1px solid var(--g100); }
 .tl-row:last-child { border-bottom: none; }
 .tl-llabel {
-  width: 130px; flex-shrink: 0; padding: 8px 12px;
+  width: 180px; flex-shrink: 0; padding: 8px 12px;
   font-size: 12px; color: var(--g500); font-weight: 500;
   border-right: 1px solid var(--g200);
   display: flex; align-items: flex-start; padding-top: 12px;
@@ -400,7 +400,7 @@ body {
 /* Timeline — phases row */
 .tl-phases-row { display: flex; border-bottom: 1px solid var(--g200); background: var(--blue-bg); }
 .tl-phases-label {
-  width: 130px; flex-shrink: 0; padding: 8px 12px;
+  width: 180px; flex-shrink: 0; padding: 8px 12px;
   font-size: 11px; font-weight: 600; color: var(--blue);
   text-transform: uppercase; letter-spacing: .04em; border-right: 1px solid var(--g200);
   display: flex; align-items: center;

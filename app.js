@@ -476,7 +476,7 @@ function renderTimeline() {
 
   root.innerHTML = `<div class="tl-box">
     <div class="tl-hrow">
-      <div class="tl-llabel-h">Centre</div>
+      <div class="tl-llabel-h">Phase</div>
       <div class="tl-months">
         ${months.map(m => {
           const isCur = m.getMonth() === new Date().getMonth() && m.getFullYear() === new Date().getFullYear();

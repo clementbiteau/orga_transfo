@@ -73,21 +73,16 @@
 
     <div class="sf-label">Type</div>
     <div class="chips">
-      <span class="chip" data-g="type" data-v="Structure"   onclick="tog(this)">Structure</span>
-      <span class="chip" data-g="type" data-v="Recrutement" onclick="tog(this)">Recrutement</span>
-      <span class="chip" data-g="type" data-v="Formation"   onclick="tog(this)">Formation</span>
-      <span class="chip" data-g="type" data-v="Produit"     onclick="tog(this)">Produit</span>
-      <span class="chip" data-g="type" data-v="Gouvernance" onclick="tog(this)">Gouvernance</span>
-      <span class="chip" data-g="type" data-v="Client"      onclick="tog(this)">Client</span>
+      <span class="chip" data-g="type" data-v="Offre"             onclick="tog(this)">Offre</span>
+      <span class="chip" data-g="type" data-v="Compétences"       onclick="tog(this)">Compétences</span>
+      <span class="chip" data-g="type" data-v="Go-to-Market"      onclick="tog(this)">Go-to-Market</span>
+      <span class="chip" data-g="type" data-v="Modèle Economique" onclick="tog(this)">Modèle Eco.</span>
     </div>
 
-    <div class="sf-label">Centre</div>
-    <div class="chips">
-      <span class="chip" data-g="centre" data-v="C01"        onclick="tog(this)">C01</span>
-      <span class="chip" data-g="centre" data-v="C02"        onclick="tog(this)">C02</span>
-      <span class="chip" data-g="centre" data-v="C03"        onclick="tog(this)">C03</span>
-      <span class="chip" data-g="centre" data-v="Transversal" onclick="tog(this)">Transversal</span>
-    </div>
+    <div class="sf-label">Phase</div>
+    <select class="sf-select" id="fph" onchange="render()">
+      <option value="">Toutes les phases</option>
+    </select>
 
     <div class="sf-label">Owner</div>
     <input class="sf-input" id="fo" placeholder="Nom du responsable…" oninput="render()">
@@ -275,17 +270,10 @@
         <div class="mf">
           <label>Type</label>
           <select id="mty">
-            <option>Structure</option><option>Recrutement</option><option>Formation</option>
-            <option>Produit</option><option>Gouvernance</option><option>Client</option>
-          </select>
-        </div>
-        <div class="mf">
-          <label>Centre</label>
-          <select id="mc">
-            <option value="Transversal">Transversal</option>
-            <option value="C01">C01 — Data &amp; IA</option>
-            <option value="C02">C02 — IA Gen</option>
-            <option value="C03">C03 — Conseil</option>
+            <option>Offre</option>
+            <option>Compétences</option>
+            <option>Go-to-Market</option>
+            <option>Modèle Economique</option>
           </select>
         </div>
         <div class="mf"><label>Owner</label><input id="mo" placeholder="Responsable…"></div>
