@@ -28,9 +28,10 @@
   <div class="nav-brand">AVA2i <b>·</b> Roadmap</div>
 
   <div class="nav-tabs">
-    <button class="ntab on" onclick="switchTab('roadmap', this)">Roadmap</button>
-    <button class="ntab"    onclick="switchTab('people',  this)">Consultants</button>
-    <button class="ntab"    onclick="switchTab('board',   this)">Board</button>
+    <button class="ntab on" onclick="switchTab('roadmap',   this)">Roadmap</button>
+    <button class="ntab"    onclick="switchTab('people',    this)">Consultants</button>
+    <button class="ntab"    onclick="switchTab('board',     this)">Board</button>
+    <button class="ntab"    onclick="switchTab('calendar',  this)">Calendrier</button>
   </div>
 
   <div class="nav-right">
@@ -77,6 +78,7 @@
       <span class="chip" data-g="type" data-v="Compétences"       onclick="tog(this)">Compétences</span>
       <span class="chip" data-g="type" data-v="Go-to-Market"      onclick="tog(this)">Go-to-Market</span>
       <span class="chip" data-g="type" data-v="Modèle Economique" onclick="tog(this)">Modèle Eco.</span>
+      <span class="chip" data-g="type" data-v="Organisation"      onclick="tog(this)">Organisation</span>
     </div>
 
     <div class="sf-label">Phase</div>
@@ -204,34 +206,48 @@
     <!-- ─── PANEL : BOARD ─── -->
     <div class="panel" id="panel-board">
       <div class="bph">
-        <div class="bp-title">Board AVA2i</div>
-        <div class="bp-sub">Vue décisionnaire · Phases &amp; Documents</div>
+        <div class="bph-left">
+          <div class="bp-title">Board AVA2i</div>
+          <div class="bp-sub">Phases · Objectifs · Tâches</div>
+        </div>
+        <button class="btn btn-blue" onclick="openNewPhase()">+ Nouvelle phase</button>
       </div>
       <div class="board-body">
 
-        <!-- Phases de transformation -->
-        <div>
-          <div class="board-section-title">
-            <span>Phases de transformation</span>
-            <button class="btn btn-blue" onclick="openNewPhase()">+ Nouvelle phase</button>
-          </div>
-          <div class="phases-grid" id="phases-grid"></div>
-        </div>
+        <!-- Stack de phases (rendu JS) -->
+        <div id="phases-stack"></div>
 
         <!-- Documents & Comptes Rendus -->
-        <div>
-          <div class="board-section-title">
-            <span>Documents &amp; Comptes Rendus</span>
+        <div class="board-section">
+          <div class="board-section-header">
+            <span class="board-section-title">Documents &amp; Comptes Rendus</span>
             <label class="btn btn-ghost" style="cursor:pointer">
               + Ajouter un PDF
               <input type="file" accept="application/pdf" id="doc-input" style="display:none" onchange="handleDocUpload(this)">
             </label>
           </div>
-          <div id="docs-list"></div>
+          <div class="board-section-body">
+            <div id="docs-list"></div>
+          </div>
         </div>
 
       </div>
     </div><!-- /panel-board -->
+
+
+    <!-- ─── PANEL : CALENDRIER ─── -->
+    <div class="panel" id="panel-calendar">
+      <div class="cal-hd">
+        <button class="btn btn-ghost" onclick="calNav(-1)">← Préc.</button>
+        <div class="cal-hd-title" id="cal-title">—</div>
+        <button class="btn btn-ghost" onclick="calToday()">Aujourd'hui</button>
+        <button class="btn btn-ghost" onclick="calNav(1)">Suiv. →</button>
+        <button class="btn btn-blue"  onclick="openNewEvent()">+ Événement</button>
+      </div>
+      <div class="cal-wrap">
+        <div class="cal-grid" id="cal-grid"></div>
+      </div>
+    </div><!-- /panel-calendar -->
 
   </main>
 </div><!-- /wrap -->
@@ -274,13 +290,18 @@
             <option>Compétences</option>
             <option>Go-to-Market</option>
             <option>Modèle Economique</option>
+            <option>Organisation</option>
           </select>
         </div>
         <div class="mf"><label>Owner</label><input id="mo" placeholder="Responsable…"></div>
         <div class="mf"><label>Date début</label><input type="date" id="mst"></div>
-        <div class="mf full">
+        <div class="mf">
           <label>Phase</label>
-          <select id="mph"><option value="">— Aucune phase —</option></select>
+          <select id="mph" onchange="populateObjDropdown()"><option value="">— Aucune phase —</option></select>
+        </div>
+        <div class="mf">
+          <label>Objectif</label>
+          <select id="mobj"><option value="">— Aucun objectif —</option></select>
         </div>
         <div class="mf full"><label>Deadline</label><input type="date" id="mdl"></div>
         <div class="mf full">
@@ -414,6 +435,98 @@
         <button class="btn btn-blue"  onclick="confirmDocUpload()">Ajouter</button>
       </div>
     </div>
+  </div>
+</div>
+
+
+<!-- ══════════════════════════════════════════════════
+     MODAL : OBJECTIF (création / édition)
+══════════════════════════════════════════════════ -->
+<div class="overlay" id="objOv" onclick="ovc(event,'objOv')">
+  <div class="modal" style="width:420px">
+    <div class="mh">
+      <input class="m-title-inp" id="obj-title" placeholder="Titre de l'objectif…">
+      <button class="mx" onclick="closeOv('objOv')">✕</button>
+    </div>
+    <div class="mb">
+      <div class="mgrid">
+        <div class="mf full">
+          <label>Description (optionnel)</label>
+          <textarea id="obj-desc" placeholder="Décris cet objectif…" style="min-height:60px"></textarea>
+        </div>
+      </div>
+      <input type="hidden" id="obj-phase-id">
+    </div>
+    <div class="mfoot">
+      <button class="btn-del" id="obj-del" onclick="delObj()" style="display:none">Supprimer</button>
+      <div class="mactions">
+        <button class="btn btn-ghost" onclick="closeOv('objOv')">Annuler</button>
+        <button class="btn btn-blue"  onclick="saveObj()">Enregistrer</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<!-- ══════════════════════════════════════════════════
+     MODAL : ÉVÉNEMENT CALENDRIER
+══════════════════════════════════════════════════ -->
+<div class="overlay" id="eventOv" onclick="ovc(event,'eventOv')">
+  <div class="modal" style="width:520px">
+    <div class="mh">
+      <input class="m-title-inp" id="ev-title" placeholder="Titre de l'événement…">
+      <button class="mx" onclick="closeOv('eventOv')">✕</button>
+    </div>
+    <div class="mb">
+      <div class="mgrid">
+        <div class="mf"><label>Date</label><input type="date" id="ev-date"></div>
+        <div class="mf"><label>Heure (optionnel)</label><input type="time" id="ev-time"></div>
+        <div class="mf full">
+          <label>Compte Rendu</label>
+          <textarea id="ev-cr" placeholder="Compte rendu de l'événement…" style="min-height:100px"></textarea>
+        </div>
+        <div class="mf full">
+          <label>Pièces jointes</label>
+          <label class="btn btn-ghost" style="cursor:pointer;display:inline-flex;align-items:center;gap:6px;font-size:12px">
+            📎 Ajouter un fichier
+            <input type="file" id="ev-attach-input" style="display:none" onchange="addEventAttach(this)" multiple>
+          </label>
+          <div class="attach-list" id="ev-attach-list"></div>
+        </div>
+      </div>
+    </div>
+    <div class="mfoot">
+      <button class="btn-del" id="ev-del" onclick="delEvent()" style="display:none">Supprimer</button>
+      <div class="mactions">
+        <button class="btn btn-ghost" onclick="closeOv('eventOv')">Annuler</button>
+        <button class="btn btn-blue"  onclick="saveEvent()">Enregistrer</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<!-- ══════════════════════════════════════════════════
+     CHAT FLOTTANT
+══════════════════════════════════════════════════ -->
+<button class="chat-fab" onclick="toggleChat()" title="Assistant / Commandes rapides">💬</button>
+
+<div class="chat-panel" id="chat-panel">
+  <div class="chat-panel-hd">
+    <div class="chat-panel-title">💬 Assistant AVA2i</div>
+    <button class="chat-panel-close" onclick="toggleChat()">✕</button>
+  </div>
+  <div class="chat-msgs" id="chat-msgs">
+    <div class="chat-msg bot"><div class="chat-msg-bubble">Bonjour ! Utilise les commandes slash pour créer des tâches rapidement.</div></div>
+  </div>
+  <div class="chat-hint">
+    <strong>/task</strong> [/today] [/endofyear] [/YYYY-MM-DD] Titre<br>
+    Ex : <code>/task /today /endofyear Finir le test du site</code>
+  </div>
+  <div class="chat-input-row">
+    <textarea class="chat-input" id="chat-input" rows="1" placeholder="/task /today Mon titre…"
+      onkeydown="chatKey(event)"></textarea>
+    <button class="chat-send-btn" onclick="sendChat()">↑</button>
   </div>
 </div>
 

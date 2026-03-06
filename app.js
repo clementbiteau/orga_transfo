@@ -30,8 +30,17 @@ const F = { status: new Set(), priority: new Set(), type: new Set() };
 // ── ÉTAT BOARD ───────────────────────────────────────────────────
 let phases      = {};
 let documents   = {};
+let objectives  = {};
 let editPhaseId = null;
+let editObjId   = null;
 let _pendingDoc = null;
+
+// ── ÉTAT CALENDRIER ───────────────────────────────────────────────
+let events      = {};
+let calYear     = new Date().getFullYear();
+let calMonth    = new Date().getMonth();
+let editEventId = null;
+let _pendingEvAttach = []; // [{name,data,size}]
 
 const QCOLORS = { Q1: '#2563eb', Q2: '#16a34a', Q3: '#b45309', Q4: '#7c3aed' };
 const QDATES  = {
@@ -44,10 +53,11 @@ const QDATES  = {
 
 // ── CONSTANTES / MAPPINGS ────────────────────────────────────────
 const TC = {
-  'Offre':            '#2563eb',
-  'Compétences':      '#7c3aed',
-  'Go-to-Market':     '#16a34a',
-  'Modèle Economique':'#b45309',
+  'Offre':             '#2563eb',
+  'Compétences':       '#7c3aed',
+  'Go-to-Market':      '#16a34a',
+  'Modèle Economique': '#b45309',
+  'Organisation':      '#0891b2',
 };
 
 const PL = { basse: 'Basse', moyenne: 'Moyenne', haute: 'Haute', critique: 'Critique' };
@@ -90,13 +100,23 @@ function initFB() {
       phases = snap.val() || {};
       lsSavePhases();
       populatePhaseSidebar();
-      if (document.getElementById('panel-board').classList.contains('on')) renderPhases();
+      if (document.getElementById('panel-board').classList.contains('on')) renderBoard();
       if (curView === 'timeline') renderTimeline();
     });
     onValue(ref(_db, 'ava2i/documents'), snap => {
       documents = snap.val() || {};
       lsSaveDocs();
       if (document.getElementById('panel-board').classList.contains('on')) renderDocs();
+    });
+    onValue(ref(_db, 'ava2i/objectives'), snap => {
+      objectives = snap.val() || {};
+      lsSaveObjs();
+      if (document.getElementById('panel-board').classList.contains('on')) renderBoard();
+    });
+    onValue(ref(_db, 'ava2i/events'), snap => {
+      events = snap.val() || {};
+      lsSaveEvents();
+      if (document.getElementById('panel-calendar').classList.contains('on')) renderCalendar();
     });
   } catch (e) {
     setSS('offline');
@@ -135,16 +155,22 @@ function lsLoad() {
   } catch (e) {}
 }
 
-function lsSavePhases() { try { localStorage.setItem('ava2i_ph', JSON.stringify(phases)); } catch(e) {} }
-function lsLoadPhases() { try { const d = localStorage.getItem('ava2i_ph'); if (d) phases = JSON.parse(d); } catch(e) {} }
-function lsSaveDocs()   { try { localStorage.setItem('ava2i_dc', JSON.stringify(documents)); } catch(e) {} }
-function lsLoadDocs()   { try { const d = localStorage.getItem('ava2i_dc'); if (d) documents = JSON.parse(d); } catch(e) {} }
+function lsSavePhases()  { try { localStorage.setItem('ava2i_ph', JSON.stringify(phases));     } catch(e) {} }
+function lsLoadPhases()  { try { const d = localStorage.getItem('ava2i_ph'); if (d) phases = JSON.parse(d);     } catch(e) {} }
+function lsSaveDocs()    { try { localStorage.setItem('ava2i_dc', JSON.stringify(documents)); } catch(e) {} }
+function lsLoadDocs()    { try { const d = localStorage.getItem('ava2i_dc'); if (d) documents = JSON.parse(d); } catch(e) {} }
+function lsSaveObjs()    { try { localStorage.setItem('ava2i_ob', JSON.stringify(objectives));} catch(e) {} }
+function lsLoadObjs()    { try { const d = localStorage.getItem('ava2i_ob'); if (d) objectives = JSON.parse(d); } catch(e) {} }
+function lsSaveEvents()  { try { localStorage.setItem('ava2i_ev', JSON.stringify(events));    } catch(e) {} }
+function lsLoadEvents()  { try { const d = localStorage.getItem('ava2i_ev'); if (d) events = JSON.parse(d);    } catch(e) {} }
 
 // Initialisation au chargement de la page
 window.addEventListener('load', () => {
   lsLoad();
   lsLoadPhases();
   lsLoadDocs();
+  lsLoadObjs();
+  lsLoadEvents();
   setTimeout(() => {
     if (window._fb) initFB();
     else setSS('offline');
@@ -156,7 +182,7 @@ window.addEventListener('load', () => {
 
 // ── MODAL TÂCHE ──────────────────────────────────────────────────
 
-function openNew() {
+function openNew(prePhaseId, preObjId) {
   editId = null;
   ['mt', 'mo', 'mdl', 'mde'].forEach(id => {
     document.getElementById(id).value = '';
@@ -166,7 +192,8 @@ function openNew() {
   document.getElementById('mty').value = 'Offre';
   document.getElementById('mst').value = new Date().toISOString().slice(0, 10);
   populatePhaseDropdown();
-  document.getElementById('mph').value = '';
+  document.getElementById('mph').value = prePhaseId || '';
+  populateObjDropdown(prePhaseId || '', preObjId || '');
   document.getElementById('mbdel').style.display = 'none';
   document.getElementById('taskOv').classList.add('on');
   setTimeout(() => document.getElementById('mt').focus(), 150);
@@ -186,6 +213,7 @@ function openTask(id) {
   document.getElementById('mde').value = t.desc     || '';
   populatePhaseDropdown();
   document.getElementById('mph').value = t.phaseId  || '';
+  populateObjDropdown(t.phaseId || '', t.objectiveId || '');
   document.getElementById('mbdel').style.display = '';
   document.getElementById('taskOv').classList.add('on');
 }
@@ -194,22 +222,25 @@ function saveTask() {
   const title = document.getElementById('mt').value.trim();
   if (!title) return;
   const id = editId || 't' + Date.now();
-  const phaseId = document.getElementById('mph').value;
+  const phaseId = document.getElementById('mph').value || null;
+  const objectiveId = document.getElementById('mobj').value || null;
   save({
     id, title,
-    status:    document.getElementById('ms').value,
-    priority:  document.getElementById('mp').value,
-    type:      document.getElementById('mty').value,
-    owner:     document.getElementById('mo').value.trim(),
-    start:     document.getElementById('mst').value,
-    deadline:  document.getElementById('mdl').value,
-    desc:      document.getElementById('mde').value.trim(),
-    phaseId:   phaseId || null,
-    createdAt: tasks[id]?.createdAt || Date.now(),
-    updatedAt: Date.now()
+    status:      document.getElementById('ms').value,
+    priority:    document.getElementById('mp').value,
+    type:        document.getElementById('mty').value,
+    owner:       document.getElementById('mo').value.trim(),
+    start:       document.getElementById('mst').value,
+    deadline:    document.getElementById('mdl').value,
+    desc:        document.getElementById('mde').value.trim(),
+    phaseId,
+    objectiveId,
+    createdAt:   tasks[id]?.createdAt || Date.now(),
+    updatedAt:   Date.now()
   });
   closeOv('taskOv');
   render();
+  if (document.getElementById('panel-board').classList.contains('on')) renderBoard();
 }
 
 function delTask() {
@@ -224,7 +255,9 @@ function ovc(e, id)        { if (e.target.id === id) closeOv(id); }
 function openSetup()       { document.getElementById('setupOv').classList.add('on'); }
 
 document.addEventListener('keydown', e => {
-  if (e.key === 'Escape') { closeOv('taskOv'); closeOv('setupOv'); closeOv('phaseOv'); closeOv('docUploadOv'); }
+  if (e.key === 'Escape') {
+    ['taskOv','setupOv','phaseOv','docUploadOv','objOv','eventOv'].forEach(id => closeOv(id));
+  }
 });
 
 
@@ -522,7 +555,8 @@ function switchTab(t, btn) {
   document.getElementById('panel-' + t).classList.add('on');
   btn.classList.add('on');
   document.getElementById('sidebar').style.display = t === 'roadmap' ? '' : 'none';
-  if (t === 'board') renderBoard();
+  if (t === 'board')    renderBoard();
+  if (t === 'calendar') renderCalendar();
 }
 
 
@@ -719,9 +753,23 @@ function sc(s) {
 
 // ── BOARD ────────────────────────────────────────────────────────
 
-function renderBoard() {
-  renderPhases();
-  renderDocs();
+/** SVG pie/donut chart — pct 0-100, color hex/css, size px */
+function pie(pct, color, size) {
+  size = size || 54;
+  const r = (size - 10) / 2, cx = size / 2, cy = size / 2;
+  const circ = 2 * Math.PI * r;
+  const dash  = ((pct / 100) * circ).toFixed(2);
+  return `<svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}" style="display:block;flex-shrink:0">
+    <circle cx="${cx}" cy="${cy}" r="${r}" fill="${color}" fill-opacity=".09"/>
+    <circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="var(--g200)" stroke-width="4.5"/>
+    <circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="${color}" stroke-width="4.5"
+      stroke-linecap="round"
+      stroke-dasharray="${dash} ${circ.toFixed(2)}"
+      transform="rotate(-90 ${cx} ${cy})"/>
+    <text x="${cx}" y="${cy}" text-anchor="middle" dominant-baseline="central"
+      font-size="11" font-weight="700" fill="${color}"
+      font-family="-apple-system,BlinkMacSystemFont,'Inter',sans-serif">${pct}%</text>
+  </svg>`;
 }
 
 function phaseProgress(phaseId) {
@@ -731,32 +779,108 @@ function phaseProgress(phaseId) {
   return { pct: total ? Math.round(done / total * 100) : 0, done, total };
 }
 
-function renderPhases() {
-  const grid = document.getElementById('phases-grid');
-  if (!grid) return;
+function renderBoard() {
+  renderPhaseSections();
+  renderDocs();
+}
+
+function renderPhaseSections() {
+  const stack = document.getElementById('phases-stack');
+  if (!stack) return;
   const list = Object.values(phases).sort((a, b) => {
     if (a.year !== b.year) return a.year - b.year;
     return a.quarter.localeCompare(b.quarter);
   });
   if (!list.length) {
-    grid.innerHTML = `<div style="grid-column:1/-1;text-align:center;padding:40px;color:var(--g400);font-size:13px;border:2px dashed var(--g200);border-radius:var(--r)">Aucune phase définie. Crée ta première phase.</div>`;
+    stack.innerHTML = `<div class="phases-empty">
+      <div class="phases-empty-icon">🗂️</div>
+      <div style="font-size:14px;font-weight:600;color:var(--g600);margin-bottom:6px">Aucune phase définie</div>
+      <div style="font-size:13px;color:var(--g400)">Crée ta première phase avec le bouton ci-dessus.</div>
+    </div>`;
     return;
   }
-  grid.innerHTML = list.map(ph => {
-    const { pct, done, total } = phaseProgress(ph.id);
-    const color   = ph.color || QCOLORS[ph.quarter] || '#6b7280';
-    const dateStr = ph.start && ph.end
-      ? `<div style="font-size:11px;color:var(--g400);margin-bottom:8px">${ph.start} → ${ph.end}</div>`
-      : '';
-    return `<div class="phase-card" style="border-left-color:${color}" onclick="openPhase('${ph.id}')">
-      <span class="phase-qlabel" style="background:${color}">${ph.quarter} ${ph.year}</span>
-      <div class="phase-name">${x(ph.name)}</div>
-      <div class="phase-obj">${x(ph.objective || '')}</div>
-      ${dateStr}
-      <div class="phase-prog-bar"><div class="phase-prog-fill" style="width:${pct}%;background:${color}"></div></div>
-      <div class="phase-prog-txt"><span>${done}/${total} validées</span><span>${pct}%</span></div>
-    </div>`;
-  }).join('');
+  // Preserve open/closed state
+  const openIds = new Set([...stack.querySelectorAll('.ph-section.open')].map(el => el.id.replace('phs-', '')));
+  stack.innerHTML = list.map(ph => phaseSection(ph, openIds.has(ph.id))).join('');
+}
+
+function phaseSection(ph, isOpen) {
+  const { pct, done, total } = phaseProgress(ph.id);
+  const color   = ph.color || QCOLORS[ph.quarter] || '#6b7280';
+  const dateStr = ph.start && ph.end ? `📅 ${ph.start} → ${ph.end}` : '';
+  const objList = Object.values(objectives)
+    .filter(o => o.phaseId === ph.id)
+    .sort((a, b) => (a.order || 0) - (b.order || 0));
+
+  return `<div class="ph-section${isOpen ? ' open' : ''}" id="phs-${ph.id}">
+    <div class="phs-hd" onclick="togglePhaseSection('${ph.id}')">
+      <div class="phs-accent" style="background:${color}"></div>
+      <div class="phs-meta">
+        <span class="phase-qlabel" style="background:${color}18;color:${color}">${ph.quarter} ${ph.year}</span>
+        <div class="phs-name">${x(ph.name)}</div>
+        ${dateStr ? `<div class="phs-dates">${dateStr}</div>` : ''}
+      </div>
+      <div class="phs-right">
+        ${pie(pct, color, 54)}
+        <button class="phs-edit-btn" onclick="openPhase('${ph.id}');event.stopPropagation()">✎ Éditer</button>
+        <span class="phs-chevron">▾</span>
+      </div>
+    </div>
+    <div class="phs-body" id="phsb-${ph.id}">
+      <div class="obj-scroll-wrap">
+        ${objList.map(o => objColumn(o)).join('')}
+        ${unassignedCol(ph)}
+        <div class="obj-col-new" onclick="openNewObj('${ph.id}')">
+          <div class="obj-col-new-inner">+ Objectif</div>
+        </div>
+      </div>
+    </div>
+  </div>`;
+}
+
+function objColumn(obj) {
+  const phTasks = Object.values(tasks)
+    .filter(t => t.objectiveId === obj.id)
+    .sort((a, b) => (a.createdAt || 0) - (b.createdAt || 0));
+  return `<div class="obj-col">
+    <div class="obj-col-hd" onclick="openObj('${obj.id}')">
+      <div class="obj-col-name" title="${x(obj.title)}">${x(obj.title)}</div>
+      <span class="obj-col-count">${phTasks.length}</span>
+    </div>
+    <div class="obj-tasks-list">
+      ${phTasks.map(t => taskMiniCard(t)).join('')}
+      <button class="obj-add-task-btn" onclick="openNew('${obj.phaseId}','${obj.id}')">+ Tâche</button>
+    </div>
+  </div>`;
+}
+
+function unassignedCol(ph) {
+  const uTasks = Object.values(tasks)
+    .filter(t => t.phaseId === ph.id && !t.objectiveId)
+    .sort((a, b) => (a.createdAt || 0) - (b.createdAt || 0));
+  if (!uTasks.length) return '';
+  return `<div class="obj-col">
+    <div class="obj-col-hd" style="cursor:default">
+      <div class="obj-col-name" style="color:var(--g400);font-style:italic">Non assignées</div>
+      <span class="obj-col-count">${uTasks.length}</span>
+    </div>
+    <div class="obj-tasks-list">
+      ${uTasks.map(t => taskMiniCard(t)).join('')}
+    </div>
+  </div>`;
+}
+
+function taskMiniCard(t) {
+  const SC = { todo: 'var(--g400)', wip: 'var(--amber)', review: 'var(--purple)', done: 'var(--green)', block: 'var(--red)' };
+  return `<div class="obj-task-card" onclick="openTask('${t.id}')">
+    <span class="otc-dot" style="background:${SC[t.status] || 'var(--g300)'}"></span>
+    <div class="otc-title">${x(t.title)}</div>
+  </div>`;
+}
+
+function togglePhaseSection(phId) {
+  const el = document.getElementById('phs-' + phId);
+  if (el) el.classList.toggle('open');
 }
 
 function renderDocs() {
@@ -764,7 +888,7 @@ function renderDocs() {
   if (!container) return;
   const list = Object.values(documents).sort((a, b) => b.date.localeCompare(a.date));
   if (!list.length) {
-    container.innerHTML = `<div class="doc-empty">📄 Aucun document. Ajoute un PDF via le bouton ci-dessus.</div>`;
+    container.innerHTML = `<div class="doc-empty"><div class="doc-empty-icon">📄</div>Aucun document. Ajoute un PDF via le bouton ci-dessus.</div>`;
     return;
   }
   const byMonth = {};
@@ -776,7 +900,7 @@ function renderDocs() {
   container.innerHTML = Object.keys(byMonth).sort((a, b) => b.localeCompare(a)).map(k => {
     const [y, m] = k.split('-');
     const label  = new Date(+y, +m - 1).toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' });
-    return `<div>
+    return `<div class="doc-month-group">
       <div class="doc-month-label">${label}</div>
       <div class="doc-list">
         ${byMonth[k].map(doc => `
@@ -786,12 +910,98 @@ function renderDocs() {
               <div class="doc-name">${x(doc.name)}</div>
               <div class="doc-meta">${doc.date} · ${formatSize(doc.size)}</div>
             </div>
-            <button class="doc-btn" onclick="downloadDoc('${doc.id}')">↓ Télécharger</button>
-            <button class="doc-btn del" onclick="confirmDelDoc('${doc.id}')">✕</button>
+            <div class="doc-actions">
+              <button class="doc-btn" onclick="downloadDoc('${doc.id}')">↓ Télécharger</button>
+              <button class="doc-btn del" onclick="confirmDelDoc('${doc.id}')">✕</button>
+            </div>
           </div>`).join('')}
       </div>
     </div>`;
   }).join('');
+}
+
+// ── OBJECTIVES CRUD ──────────────────────────────────────────────
+
+function openNewObj(phaseId) {
+  editObjId = null;
+  document.getElementById('obj-phase-id').value = phaseId || '';
+  document.getElementById('obj-title').value = '';
+  document.getElementById('obj-desc').value  = '';
+  document.getElementById('obj-del').style.display = 'none';
+  document.getElementById('objOv').classList.add('on');
+  setTimeout(() => document.getElementById('obj-title').focus(), 120);
+}
+
+function openObj(id) {
+  const obj = objectives[id];
+  if (!obj) return;
+  editObjId = id;
+  document.getElementById('obj-phase-id').value = obj.phaseId || '';
+  document.getElementById('obj-title').value    = obj.title || '';
+  document.getElementById('obj-desc').value     = obj.desc  || '';
+  document.getElementById('obj-del').style.display = '';
+  document.getElementById('objOv').classList.add('on');
+}
+
+function saveObj() {
+  const title = document.getElementById('obj-title').value.trim();
+  if (!title) return;
+  const phaseId = document.getElementById('obj-phase-id').value;
+  const id = editObjId || 'o' + Date.now();
+  const obj = {
+    id, phaseId, title,
+    desc:      document.getElementById('obj-desc').value.trim(),
+    order:     editObjId ? (objectives[id]?.order || 0) : Date.now(),
+    createdAt: objectives[id]?.createdAt || Date.now(),
+    updatedAt: Date.now()
+  };
+  saveObjData(obj);
+  closeOv('objOv');
+}
+
+function delObj() {
+  if (!editObjId || !confirm('Supprimer cet objectif ?')) return;
+  // Unassign tasks from this objective
+  Object.values(tasks).forEach(t => {
+    if (t.objectiveId === editObjId) {
+      t.objectiveId = null;
+      save(t);
+    }
+  });
+  delObjData(editObjId);
+  closeOv('objOv');
+}
+
+function saveObjData(obj) {
+  if (_db) {
+    const { ref, set } = window._fb;
+    set(ref(_db, 'ava2i/objectives/' + obj.id), obj);
+  }
+  objectives[obj.id] = obj;
+  lsSaveObjs();
+  renderBoard();
+}
+
+function delObjData(id) {
+  if (_db) {
+    const { ref, remove } = window._fb;
+    remove(ref(_db, 'ava2i/objectives/' + id));
+  }
+  delete objectives[id];
+  lsSaveObjs();
+  renderBoard();
+}
+
+function populateObjDropdown(phaseId, selectedObjId) {
+  const sel = document.getElementById('mobj');
+  if (!sel) return;
+  const ph  = phaseId || document.getElementById('mph')?.value || '';
+  const obs = Object.values(objectives)
+    .filter(o => o.phaseId === ph)
+    .sort((a, b) => (a.order || 0) - (b.order || 0));
+  sel.innerHTML = `<option value="">— Aucun objectif —</option>` +
+    obs.map(o => `<option value="${o.id}">${x(o.title)}</option>`).join('');
+  if (selectedObjId) sel.value = selectedObjId;
 }
 
 function formatSize(bytes) {
@@ -960,7 +1170,7 @@ function savePhaseData(ph) {
   }
   phases[ph.id] = ph;
   lsSavePhases();
-  renderPhases();
+  renderBoard();
   populatePhaseSidebar();
   if (curView === 'timeline') renderTimeline();
 }
@@ -969,7 +1179,7 @@ function delPhaseData(id) {
   if (_db) { const { ref, remove } = window._fb; remove(ref(_db, 'ava2i/phases/' + id)); }
   delete phases[id];
   lsSavePhases();
-  renderPhases();
+  renderBoard();
   populatePhaseSidebar();
   if (curView === 'timeline') renderTimeline();
 }
@@ -992,4 +1202,272 @@ function delDocData(id) {
   delete documents[id];
   lsSaveDocs();
   renderDocs();
+}
+
+
+// ── CALENDRIER ───────────────────────────────────────────────────
+
+const CAL_DAYS_FR = ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim'];
+
+function renderCalendar() {
+  const titleEl = document.getElementById('cal-title');
+  const gridEl  = document.getElementById('cal-grid');
+  if (!titleEl || !gridEl) return;
+
+  const firstDay = new Date(calYear, calMonth, 1);
+  const lastDay  = new Date(calYear, calMonth + 1, 0);
+  const today    = new Date();
+
+  // Month title
+  titleEl.textContent = firstDay.toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' });
+
+  // Events this month
+  const prefix = `${calYear}-${String(calMonth + 1).padStart(2, '0')}`;
+  const monthEvs = Object.values(events).filter(e => e.date && e.date.startsWith(prefix));
+  const byDay = {};
+  monthEvs.forEach(e => {
+    const d = e.date.slice(8, 10);
+    if (!byDay[d]) byDay[d] = [];
+    byDay[d].push(e);
+  });
+
+  // Grid — week starts Monday
+  let startDow = firstDay.getDay(); // 0=Sun
+  startDow = (startDow === 0 ? 6 : startDow - 1); // shift to Mon=0
+
+  const cells = [];
+  for (let i = 0; i < startDow; i++) cells.push(null); // empty before
+  for (let d = 1; d <= lastDay.getDate(); d++) cells.push(d);
+  while (cells.length % 7 !== 0) cells.push(null); // empty after
+
+  const weeks = [];
+  for (let i = 0; i < cells.length; i += 7) weeks.push(cells.slice(i, i + 7));
+
+  gridEl.innerHTML = `
+    <div class="cal-day-headers">
+      ${CAL_DAYS_FR.map(d => `<div class="cal-day-h">${d}</div>`).join('')}
+    </div>
+    ${weeks.map(week => `
+      <div class="cal-week">
+        ${week.map(d => {
+          if (!d) return `<div class="cal-day other-m"></div>`;
+          const ds    = String(d).padStart(2, '0');
+          const isToday = today.getDate() === d && today.getMonth() === calMonth && today.getFullYear() === calYear;
+          const dayEvs  = byDay[ds] || [];
+          const dateStr = `${calYear}-${String(calMonth+1).padStart(2,'0')}-${ds}`;
+          return `<div class="cal-day${isToday ? ' today' : ''}" onclick="openNewEvent('${dateStr}')">
+            <div class="cal-day-num">${d}</div>
+            ${dayEvs.slice(0, 3).map(e => `
+              <span class="cal-ev-pill" onclick="openEvent('${e.id}');event.stopPropagation()" title="${x(e.title)}">
+                ${e.time ? e.time.slice(0,5) + ' ' : ''}${x(e.title)}
+              </span>`).join('')}
+            ${dayEvs.length > 3 ? `<span style="font-size:10px;color:var(--g400)">+${dayEvs.length - 3} autres</span>` : ''}
+          </div>`;
+        }).join('')}
+      </div>`
+    ).join('')}`;
+}
+
+function calNav(dir) {
+  calMonth += dir;
+  if (calMonth > 11) { calMonth = 0; calYear++; }
+  if (calMonth < 0)  { calMonth = 11; calYear--; }
+  renderCalendar();
+}
+
+function calToday() {
+  calYear  = new Date().getFullYear();
+  calMonth = new Date().getMonth();
+  renderCalendar();
+}
+
+// ── EVENTS CRUD ──────────────────────────────────────────────────
+
+function openNewEvent(dateStr) {
+  editEventId = null;
+  _pendingEvAttach = [];
+  document.getElementById('ev-title').value = '';
+  document.getElementById('ev-date').value  = dateStr || new Date().toISOString().slice(0, 10);
+  document.getElementById('ev-time').value  = '';
+  document.getElementById('ev-cr').value    = '';
+  document.getElementById('ev-attach-list').innerHTML = '';
+  document.getElementById('ev-del').style.display = 'none';
+  document.getElementById('eventOv').classList.add('on');
+  setTimeout(() => document.getElementById('ev-title').focus(), 120);
+}
+
+function openEvent(id) {
+  const ev = events[id];
+  if (!ev) return;
+  editEventId = id;
+  _pendingEvAttach = ev.attachments ? [...ev.attachments] : [];
+  document.getElementById('ev-title').value = ev.title || '';
+  document.getElementById('ev-date').value  = ev.date  || '';
+  document.getElementById('ev-time').value  = ev.time  || '';
+  document.getElementById('ev-cr').value    = ev.cr    || '';
+  document.getElementById('ev-del').style.display = '';
+  renderAttachList();
+  document.getElementById('eventOv').classList.add('on');
+}
+
+function addEventAttach(input) {
+  const files = Array.from(input.files);
+  files.forEach(file => {
+    if (file.size > 5 * 1024 * 1024) { alert(`"${file.name}" dépasse 5 Mo.`); return; }
+    const reader = new FileReader();
+    reader.onload = e => {
+      _pendingEvAttach.push({ name: file.name, data: e.target.result, size: file.size });
+      renderAttachList();
+    };
+    reader.readAsDataURL(file);
+  });
+  input.value = '';
+}
+
+function renderAttachList() {
+  const el = document.getElementById('ev-attach-list');
+  if (!el) return;
+  el.innerHTML = _pendingEvAttach.map((a, i) => `
+    <div class="attach-item">
+      <span>📎</span>
+      <span class="attach-name" title="${x(a.name)}">${x(a.name)}</span>
+      <span style="font-size:11px;color:var(--g400)">${formatSize(a.size)}</span>
+      <button class="attach-del" onclick="removeAttach(${i})">✕</button>
+    </div>`).join('');
+}
+
+function removeAttach(idx) {
+  _pendingEvAttach.splice(idx, 1);
+  renderAttachList();
+}
+
+function saveEvent() {
+  const title = document.getElementById('ev-title').value.trim();
+  if (!title) { document.getElementById('ev-title').focus(); return; }
+  const id = editEventId || 'ev_' + Date.now();
+  const ev = {
+    id, title,
+    date:        document.getElementById('ev-date').value,
+    time:        document.getElementById('ev-time').value,
+    cr:          document.getElementById('ev-cr').value.trim(),
+    attachments: _pendingEvAttach,
+    createdAt:   events[id]?.createdAt || Date.now(),
+    updatedAt:   Date.now()
+  };
+  saveEventData(ev);
+  closeOv('eventOv');
+}
+
+function delEvent() {
+  if (!editEventId || !confirm('Supprimer cet événement ?')) return;
+  delEventData(editEventId);
+  closeOv('eventOv');
+}
+
+function saveEventData(ev) {
+  if (_db) {
+    const { ref, set } = window._fb;
+    set(ref(_db, 'ava2i/events/' + ev.id), ev);
+  }
+  events[ev.id] = ev;
+  lsSaveEvents();
+  renderCalendar();
+}
+
+function delEventData(id) {
+  if (_db) { const { ref, remove } = window._fb; remove(ref(_db, 'ava2i/events/' + id)); }
+  delete events[id];
+  lsSaveEvents();
+  renderCalendar();
+}
+
+
+// ── CHAT ─────────────────────────────────────────────────────────
+
+let _chatOpen = false;
+
+function toggleChat() {
+  _chatOpen = !_chatOpen;
+  document.getElementById('chat-panel').classList.toggle('on', _chatOpen);
+  if (_chatOpen) setTimeout(() => document.getElementById('chat-input').focus(), 150);
+}
+
+function chatKey(e) {
+  if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendChat(); }
+}
+
+function sendChat() {
+  const input = document.getElementById('chat-input');
+  const msg   = input.value.trim();
+  if (!msg) return;
+  input.value = '';
+  input.style.height = '';
+  addChatMsg('user', msg);
+  processChatCmd(msg);
+}
+
+function processChatCmd(raw) {
+  const tokens  = raw.trim().split(/\s+/);
+  const cmds    = tokens.filter(t => t.startsWith('/'));
+  const textParts = tokens.filter(t => !t.startsWith('/'));
+  const title   = textParts.join(' ').trim();
+
+  if (!cmds.includes('/task')) {
+    addChatMsg('bot', 'Commence par <strong>/task</strong> pour créer une tâche. Ex :<br><code>/task /today /endofyear Finaliser le rapport</code>');
+    return;
+  }
+
+  if (!title) {
+    addChatMsg('error', 'Précise un titre après les commandes. Ex : <code>/task /today Mon titre</code>');
+    return;
+  }
+
+  const todayStr   = new Date().toISOString().slice(0, 10);
+  const yearEndStr = `${new Date().getFullYear()}-12-31`;
+
+  let startDate    = '';
+  let deadlineDate = '';
+
+  cmds.forEach(c => {
+    if (c === '/today')    startDate    = todayStr;
+    if (c === '/endofyear') deadlineDate = yearEndStr;
+    if (/^\/\d{4}-\d{2}-\d{2}$/.test(c)) {
+      const ds = c.slice(1);
+      // If no start set yet, use as start; else as deadline
+      if (!startDate) startDate = ds; else deadlineDate = ds;
+    }
+  });
+
+  const id = 't' + Date.now();
+  save({
+    id, title,
+    status:    'todo',
+    priority:  'moyenne',
+    type:      'Organisation',
+    start:     startDate,
+    deadline:  deadlineDate,
+    owner:     '',
+    desc:      '',
+    phaseId:   null,
+    objectiveId: null,
+    createdAt: Date.now(),
+    updatedAt: Date.now()
+  });
+  render();
+  if (document.getElementById('panel-board').classList.contains('on')) renderBoard();
+
+  addChatMsg('success',
+    `✓ Tâche créée : <strong>${x(title)}</strong>` +
+    (startDate    ? `<br>Début : ${startDate}` : '') +
+    (deadlineDate ? `<br>Deadline : ${deadlineDate}` : '')
+  );
+}
+
+function addChatMsg(type, html) {
+  const msgs = document.getElementById('chat-msgs');
+  const div  = document.createElement('div');
+  div.className = `chat-msg ${type}`;
+  div.innerHTML = `<div class="chat-msg-bubble">${html}</div>`;
+  msgs.appendChild(div);
+  msgs.scrollTop = msgs.scrollHeight;
 }
