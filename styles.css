@@ -269,9 +269,12 @@ body {
 .modal {
   background: var(--white); border-radius: 10px; border: 1px solid var(--g200);
   box-shadow: 0 20px 40px rgba(0,0,0,.12);
-  width: 540px; max-width: 95vw; max-height: 90vh; overflow-y: auto;
+  width: 540px; max-width: 95vw; max-height: 90vh;
+  display: flex; flex-direction: column;
   transform: translateY(10px); opacity: 0; transition: transform .2s, opacity .15s;
 }
+.mb { overflow-y: auto; }
+.mfoot { flex-shrink: 0; }
 .overlay.on .modal { transform: none; opacity: 1; }
 .mh { padding: 18px 20px 14px; border-bottom: 1px solid var(--g100); display: flex; align-items: flex-start; gap: 10px; }
 .m-title-inp { font-family: var(--ff); font-size: 15px; font-weight: 700; color: var(--g900); border: none; background: none; width: 100%; outline: none; }
